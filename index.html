@@ -1748,7 +1748,12 @@
 
         function teamView(n) {
             const admin = window.fb && window.fb.isLoggedIn();
-            return admin ? lastDrawResult['team' + n] : lastDrawResult['pub' + n];
+            const list = admin ? lastDrawResult['team' + n] : lastDrawResult['pub' + n];
+            // O id é a chave fixa; o nome exibido é sempre o atual da lista
+            return list.map(x => {
+                const cur = appState.players.find(pl => pl.id === x.id);
+                return cur ? { ...x, name: cur.name } : x;
+            });
         }
 
         function visibleLeaders(ids) {
@@ -1852,6 +1857,7 @@
             if (!document.getElementById('tab-sorteio').classList.contains('hidden')) {
                 initDrawTab();
             }
+            if (lastDrawResult.team1.length || lastDrawResult.team2.length) renderDrawResults();
         }
 
         // Initialize on load
