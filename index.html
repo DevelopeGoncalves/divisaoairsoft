@@ -376,7 +376,7 @@
                                 <option value="">-- Sem líder fixo (aleatório) --</option>
                             </select>
                         </div>
-                        <div>
+                        <div data-admin-only style="display:none">
                             <label class="block text-xs text-gray-400 mb-1">Segundo Líder da Equipe 1 (opcional)</label>
                             <select id="coleader1-select" onchange="handleLeaderChange(1)" class="w-full px-3 py-2.5 bg-[#0d100e] border border-orange-500/40 rounded-lg text-sm text-white outline-none">
                                 <option value="">-- Nenhum --</option>
@@ -409,7 +409,7 @@
                                 <option value="">-- Sem líder fixo (aleatório) --</option>
                             </select>
                         </div>
-                        <div>
+                        <div data-admin-only style="display:none">
                             <label class="block text-xs text-gray-400 mb-1">Segundo Líder da Equipe 2 (opcional)</label>
                             <select id="coleader2-select" onchange="handleLeaderChange(2)" class="w-full px-3 py-2.5 bg-[#0d100e] border border-[#688f5b]/40 rounded-lg text-sm text-white outline-none">
                                 <option value="">-- Nenhum --</option>
@@ -793,8 +793,9 @@
             const label = document.getElementById('btn-auth-label');
             if (label) label.textContent = user ? 'Sair (admin)' : 'Admin';
             document.querySelectorAll('[data-admin-only]').forEach(el => el.style.display = user ? "" : "none");
-            if (!user) ['partner1-select', 'partner2-select'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+            if (!user) ['partner1-select', 'partner2-select', 'coleader1-select', 'coleader2-select'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
             if (typeof renderDrawPoolAndLeaders === 'function') renderDrawPoolAndLeaders();
+            if (typeof renderDrawResults === 'function' && lastDrawResult.team1.length) renderDrawResults();
         };
 
         function uid() {
@@ -1521,8 +1522,9 @@
 
             let leader1Id = document.getElementById('leader1-select').value;
             let leader2Id = document.getElementById('leader2-select').value;
-            let co1 = document.getElementById('coleader1-select').value;
-            let co2 = document.getElementById('coleader2-select').value;
+            const isAdminDraw = window.fb && window.fb.isLoggedIn();
+            let co1 = isAdminDraw ? document.getElementById('coleader1-select').value : '';
+            let co2 = isAdminDraw ? document.getElementById('coleader2-select').value : '';
             const fixedPicked = [leader1Id, leader2Id, co1, co2].filter(v => v && v !== 'random');
             if (new Set(fixedPicked).size !== fixedPicked.length) {
                 showToast('Escolha pessoas diferentes para cada posição de líder!', 'error');
@@ -1609,6 +1611,11 @@
             }, 350);
         }
 
+        // Quem não é admin vê só o líder principal; o segundo líder fica oculto
+        function visibleLeaders(ids) {
+            return (window.fb && window.fb.isLoggedIn()) ? ids : ids.slice(0, 1);
+        }
+
         function renderDrawResults() {
             const t1Name = document.getElementById('team1-name').value.trim() || 'EQUIPE 1';
             const t2Name = document.getElementById('team2-name').value.trim() || 'EQUIPE 2';
@@ -1620,7 +1627,7 @@
 
             const renderList = (list, leaderId, accentColor) => {
                 return list.map((p, idx) => {
-                    const isLeader = leaderId.includes(p.id);
+                    const isLeader = visibleLeaders(leaderId).includes(p.id);
                     return `
                         <li class="px-3 py-2.5 flex items-center justify-between gap-2 ${isLeader ? 'bg-amber-500/10 rounded-lg' : ''}">
                             <div class="flex items-center gap-2.5">
@@ -1651,13 +1658,13 @@
 
             text += `🟧 *${t1Name}* (${lastDrawResult.team1.length}):\n`;
             lastDrawResult.team1.forEach((p, i) => {
-                const crown = lastDrawResult.leader1Ids.includes(p.id) ? ' 👑 (Líder)' : '';
+                const crown = visibleLeaders(lastDrawResult.leader1Ids).includes(p.id) ? ' 👑 (Líder)' : '';
                 text += `${i + 1}- ${p.name}${crown}\n`;
             });
 
             text += `\n🟩 *${t2Name}* (${lastDrawResult.team2.length}):\n`;
             lastDrawResult.team2.forEach((p, i) => {
-                const crown = lastDrawResult.leader2Ids.includes(p.id) ? ' 👑 (Líder)' : '';
+                const crown = visibleLeaders(lastDrawResult.leader2Ids).includes(p.id) ? ' 👑 (Líder)' : '';
                 text += `${i + 1}- ${p.name}${crown}\n`;
             });
 
