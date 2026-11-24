@@ -376,6 +376,12 @@
                                 <option value="">-- Sem líder fixo (aleatório) --</option>
                             </select>
                         </div>
+                        <div data-admin-only style="display:none">
+                            <label class="block text-xs text-gray-400 mb-1">Mais 1 jogador junto do líder (opcional)</label>
+                            <select id="partner1-select" onchange="renderDrawPoolAndLeaders()" class="w-full px-3 py-2.5 bg-[#0d100e] border border-dashed border-orange-500/40 rounded-lg text-sm text-white outline-none">
+                                <option value="">-- Nenhum --</option>
+                            </select>
+                        </div>
                     </div>
 
                     <!-- Team 2 Setup -->
@@ -395,6 +401,12 @@
                             <label class="block text-xs text-gray-400 mb-1">Líder Fixo da Equipe 2</label>
                             <select id="leader2-select" onchange="handleLeaderChange(2)" class="w-full px-3 py-2.5 bg-[#0d100e] border border-[#688f5b]/40 focus:border-[#688f5b] rounded-lg text-sm text-white outline-none">
                                 <option value="">-- Sem líder fixo (aleatório) --</option>
+                            </select>
+                        </div>
+                        <div data-admin-only style="display:none">
+                            <label class="block text-xs text-gray-400 mb-1">Mais 1 jogador junto do líder (opcional)</label>
+                            <select id="partner2-select" onchange="renderDrawPoolAndLeaders()" class="w-full px-3 py-2.5 bg-[#0d100e] border border-dashed border-[#688f5b]/40 rounded-lg text-sm text-white outline-none">
+                                <option value="">-- Nenhum --</option>
                             </select>
                         </div>
                     </div>
@@ -765,6 +777,9 @@
         window.updateAuthUI = function (user) {
             const label = document.getElementById('btn-auth-label');
             if (label) label.textContent = user ? 'Sair (admin)' : 'Admin';
+            document.querySelectorAll('[data-admin-only]').forEach(el => el.style.display = user ? "" : "none");
+            if (!user) ['partner1-select', 'partner2-select'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+            if (typeof renderDrawPoolAndLeaders === 'function') renderDrawPoolAndLeaders();
         };
 
         function uid() {
@@ -1448,6 +1463,24 @@
 
             leader1Sel.innerHTML = buildOptions(validPrevL1, validPrevL2);
             leader2Sel.innerHTML = buildOptions(validPrevL2, validPrevL1);
+
+            // Parceiro extra (visível só para admin logado)
+            const p1Sel = document.getElementById('partner1-select');
+            const p2Sel = document.getElementById('partner2-select');
+            let prevP1 = p1Sel.value, prevP2 = p2Sel.value;
+            const taken = new Set([validPrevL1, validPrevL2].filter(Boolean));
+            if (!activePlayers.some(p => p.id === prevP1) || taken.has(prevP1)) prevP1 = '';
+            if (!activePlayers.some(p => p.id === prevP2) || taken.has(prevP2) || prevP2 === prevP1) prevP2 = '';
+            const buildPartner = (selectedVal, otherPartner) => {
+                let opts = `<option value="">-- Nenhum --</option>`;
+                activePlayers.forEach(p => {
+                    if (taken.has(p.id) || p.id === otherPartner) return;
+                    opts += `<option value="${p.id}" ${p.id === selectedVal ? 'selected' : ''}>${escapeHtml(p.name)}</option>`;
+                });
+                return opts;
+            };
+            p1Sel.innerHTML = buildPartner(prevP1, prevP2);
+            p2Sel.innerHTML = buildPartner(prevP2, prevP1);
         }
 
         function handleLeaderChange(changedTeam) {
@@ -1487,6 +1520,11 @@
                 return;
             }
 
+            // Parceiros extras: só valem para admin logado
+            const isAdmin = window.fb && window.fb.isLoggedIn();
+            const partner1Id = isAdmin ? document.getElementById('partner1-select').value : '';
+            const partner2Id = isAdmin ? document.getElementById('partner2-select').value : '';
+
             const btn = document.getElementById('btn-draw-teams');
             const resultsArea = document.getElementById('draw-results-area');
             const teamsGrid = document.getElementById('teams-grid');
@@ -1505,8 +1543,14 @@
                 if (leader1) team1.push(leader1);
                 if (leader2) team2.push(leader2);
 
-                // Remaining players excluding fixed leaders
-                const remaining = participants.filter(p => p.id !== leader1Id && p.id !== leader2Id);
+                const partner1 = participants.find(p => p.id === partner1Id);
+                const partner2 = participants.find(p => p.id === partner2Id);
+                if (partner1) team1.push(partner1);
+                if (partner2) team2.push(partner2);
+
+                // Remaining players excluding fixed leaders and partners
+                const fixedIds = new Set([leader1Id, leader2Id, partner1Id, partner2Id].filter(Boolean));
+                const remaining = participants.filter(p => !fixedIds.has(p.id));
                 const shuffled = fisherYatesShuffle(remaining);
 
                 // Distribute balancing team sizes
