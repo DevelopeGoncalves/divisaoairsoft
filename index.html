@@ -621,10 +621,15 @@
         const auth = getAuth(app);
         const eventRef = doc(db, 'airsoft', 'event');
         const rosterRef = doc(db, 'airsoft', 'roster');
+        const drawRef = doc(db, 'airsoft', 'draw');
+        const drawAdminRef = doc(db, 'airsoft', 'draw_admin');
+        let unsubAdminDraw = null;
 
         window.fb = {
             saveRoster: (data) => setDoc(rosterRef, data),
             saveEvent: (data) => setDoc(eventRef, data),
+            saveDraw: (data) => setDoc(drawRef, data),
+            saveDrawAdmin: (data) => setDoc(drawAdminRef, data),
             login: (email, pass) => signInWithEmailAndPassword(auth, email, pass),
             logout: () => signOut(auth),
             isLoggedIn: () => !!auth.currentUser
@@ -646,8 +651,22 @@
             if (snap.exists()) window.applyRemote({ event: snap.data() });
         }, (e) => console.error(e));
 
+        // Sorteio público em tempo real (sem dados ocultos de admin)
+        onSnapshot(drawRef, (snap) => {
+            if (snap.metadata.hasPendingWrites || !snap.exists()) return;
+            window.applyRemoteDraw(snap.data());
+        }, (e) => console.error(e));
+
         onAuthStateChanged(auth, (user) => {
             window.updateAuthUI(user);
+            // Admin também recebe a versão completa do sorteio (com 2º líder)
+            if (unsubAdminDraw) { unsubAdminDraw(); unsubAdminDraw = null; window.applyRemoteDrawAdmin(null); }
+            if (user) {
+                unsubAdminDraw = onSnapshot(drawAdminRef, (snap) => {
+                    if (snap.metadata.hasPendingWrites) return;
+                    window.applyRemoteDrawAdmin(snap.exists() ? snap.data() : null);
+                }, (e) => console.error(e));
+            }
             // Admin logado: semeia as informações do jogo se ainda não existirem
             if (user) {
                 import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js").then(({ getDoc }) =>
@@ -728,6 +747,7 @@
         window.DEFAULT_STATE = DEFAULT_STATE;
         let selectedForDraw = new Set();
         let lastDrawResult = { team1: [], team2: [], pub1: [], pub2: [], leader1Ids: [], leader2Ids: [] };
+        let adminDrawData = null;
 
         function saveState() {
             // Grava lista no Firestore (aberto a todos). Informações do jogo só via saveEventInfo (admin).
@@ -1606,8 +1626,12 @@
                 lastDrawResult = {
                     team1: mix(team1, leaders1), team2: mix(team2, leaders2),
                     pub1: mixPublic(team1, leaders1), pub2: mixPublic(team2, leaders2),
-                    leader1Ids: leaders1, leader2Ids: leaders2
+                    leader1Ids: leaders1, leader2Ids: leaders2,
+                    id: uid(),
+                    t1Name: document.getElementById('team1-name').value.trim() || 'EQUIPE 1',
+                    t2Name: document.getElementById('team2-name').value.trim() || 'EQUIPE 2'
                 };
+                publishDraw();
                 renderDrawResults();
 
                 resultsArea.classList.remove('hidden');
@@ -1621,6 +1645,55 @@
         }
 
         // Quem não é admin vê só o líder principal; o segundo líder fica oculto
+        // ---- Sorteio em tempo real ----
+        const slim = (list) => list.map(x => ({ id: x.id, name: x.name }));
+        function publishDraw() {
+            const d = lastDrawResult;
+            // Versão pública: só líder principal e lista com ordem pública
+            window.fb.saveDraw({
+                id: d.id, ts: Date.now(), t1Name: d.t1Name, t2Name: d.t2Name,
+                team1: slim(d.pub1), team2: slim(d.pub2),
+                leader1Id: d.leader1Ids[0] || '', leader2Id: d.leader2Ids[0] || ''
+            }).catch(e => console.error(e));
+            // Versão completa só legível por admin logado
+            if (window.fb.isLoggedIn()) {
+                window.fb.saveDrawAdmin({
+                    id: d.id, team1: slim(d.team1), team2: slim(d.team2),
+                    leader1Ids: d.leader1Ids, leader2Ids: d.leader2Ids
+                }).catch(e => console.error(e));
+            }
+        }
+
+        function mergeAdminDraw() {
+            const a = adminDrawData;
+            if (a && a.id === lastDrawResult.id) {
+                lastDrawResult.team1 = a.team1; lastDrawResult.team2 = a.team2;
+                lastDrawResult.leader1Ids = a.leader1Ids; lastDrawResult.leader2Ids = a.leader2Ids;
+            }
+        }
+
+        window.applyRemoteDraw = function (d) {
+            if (!d || d.id === lastDrawResult.id) return;
+            lastDrawResult = {
+                id: d.id, t1Name: d.t1Name, t2Name: d.t2Name,
+                team1: d.team1 || [], team2: d.team2 || [], pub1: d.team1 || [], pub2: d.team2 || [],
+                leader1Ids: d.leader1Id ? [d.leader1Id] : [], leader2Ids: d.leader2Id ? [d.leader2Id] : []
+            };
+            mergeAdminDraw();
+            renderDrawResults();
+            document.getElementById('draw-results-area').classList.remove('hidden');
+            if (window.__drawLoaded) showToast('Novo sorteio realizado! Veja na aba Sorteio de Equipes.', 'info');
+            window.__drawLoaded = true;
+        };
+
+        window.applyRemoteDrawAdmin = function (a) {
+            adminDrawData = a;
+            if (a && a.id === lastDrawResult.id) {
+                mergeAdminDraw();
+                if (lastDrawResult.team1.length) renderDrawResults();
+            }
+        };
+
         function teamView(n) {
             const admin = window.fb && window.fb.isLoggedIn();
             return admin ? lastDrawResult['team' + n] : lastDrawResult['pub' + n];
@@ -1631,8 +1704,8 @@
         }
 
         function renderDrawResults() {
-            const t1Name = document.getElementById('team1-name').value.trim() || 'EQUIPE 1';
-            const t2Name = document.getElementById('team2-name').value.trim() || 'EQUIPE 2';
+            const t1Name = lastDrawResult.t1Name || document.getElementById('team1-name').value.trim() || 'EQUIPE 1';
+            const t2Name = lastDrawResult.t2Name || document.getElementById('team2-name').value.trim() || 'EQUIPE 2';
 
             document.getElementById('result-team1-title').textContent = t1Name;
             document.getElementById('result-team2-title').textContent = t2Name;
@@ -1665,8 +1738,8 @@
         function copyTeamsWhatsApp() {
             if (lastDrawResult.team1.length === 0 && lastDrawResult.team2.length === 0) return;
 
-            const t1Name = document.getElementById('team1-name').value.trim() || 'EQUIPE 1';
-            const t2Name = document.getElementById('team2-name').value.trim() || 'EQUIPE 2';
+            const t1Name = lastDrawResult.t1Name || document.getElementById('team1-name').value.trim() || 'EQUIPE 1';
+            const t2Name = lastDrawResult.t2Name || document.getElementById('team2-name').value.trim() || 'EQUIPE 2';
 
             let text = `⚔️ *DIVISÃO DE EQUIPES - ${appState.event.local.toUpperCase()}* ⚔️\n\n`;
 

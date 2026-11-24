@@ -10,5 +10,13 @@ service cloud.firestore {
       allow read: if true;
       allow write: if request.auth != null;
     }
+    // Resultado público do sorteio: qualquer pessoa sorteia e todos veem em tempo real
+    match /airsoft/draw {
+      allow read, write: if true;
+    }
+    // Resultado completo do sorteio (com 2º líder): só admin logado
+    match /airsoft/draw_admin {
+      allow read, write: if request.auth != null;
+    }
   }
 }
