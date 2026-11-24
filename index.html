@@ -376,6 +376,12 @@
                                 <option value="">-- Sem líder fixo (aleatório) --</option>
                             </select>
                         </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Segundo Líder da Equipe 1 (opcional)</label>
+                            <select id="coleader1-select" onchange="handleLeaderChange(1)" class="w-full px-3 py-2.5 bg-[#0d100e] border border-orange-500/40 rounded-lg text-sm text-white outline-none">
+                                <option value="">-- Nenhum --</option>
+                            </select>
+                        </div>
                         <div data-admin-only style="display:none">
                             <label class="block text-xs text-gray-400 mb-1">Mais 1 jogador junto do líder (opcional)</label>
                             <select id="partner1-select" onchange="renderDrawPoolAndLeaders()" class="w-full px-3 py-2.5 bg-[#0d100e] border border-dashed border-orange-500/40 rounded-lg text-sm text-white outline-none">
@@ -401,6 +407,12 @@
                             <label class="block text-xs text-gray-400 mb-1">Líder Fixo da Equipe 2</label>
                             <select id="leader2-select" onchange="handleLeaderChange(2)" class="w-full px-3 py-2.5 bg-[#0d100e] border border-[#688f5b]/40 focus:border-[#688f5b] rounded-lg text-sm text-white outline-none">
                                 <option value="">-- Sem líder fixo (aleatório) --</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Segundo Líder da Equipe 2 (opcional)</label>
+                            <select id="coleader2-select" onchange="handleLeaderChange(2)" class="w-full px-3 py-2.5 bg-[#0d100e] border border-[#688f5b]/40 rounded-lg text-sm text-white outline-none">
+                                <option value="">-- Nenhum --</option>
                             </select>
                         </div>
                         <div data-admin-only style="display:none">
@@ -715,7 +727,7 @@
         window.appState = appState;
         window.DEFAULT_STATE = DEFAULT_STATE;
         let selectedForDraw = new Set();
-        let lastDrawResult = { team1: [], team2: [], leader1Id: '', leader2Id: '' };
+        let lastDrawResult = { team1: [], team2: [], leader1Ids: [], leader2Ids: [] };
 
         function saveState() {
             // Grava lista no Firestore (aberto a todos). Informações do jogo só via saveEventInfo (admin).
@@ -1427,12 +1439,6 @@
 
         function renderDrawPoolAndLeaders() {
             const poolContainer = document.getElementById('draw-pool-container');
-            const leader1Sel = document.getElementById('leader1-select');
-            const leader2Sel = document.getElementById('leader2-select');
-
-            const prevL1 = leader1Sel.value;
-            const prevL2 = leader2Sel.value;
-
             document.getElementById('draw-selected-count').textContent = selectedForDraw.size;
 
             // Render checkboxes
@@ -1453,58 +1459,50 @@
             // Populate Leader Dropdowns with currently selected participants
             const activePlayers = appState.players.filter(p => selectedForDraw.has(p.id));
 
-            const buildOptions = (selectedVal, blockedVal) => {
-                let opts = `<option value="">-- Sem líder fixo (aleatório) --</option>`;
+            // Todos os campos de seleção fixa (líderes, segundos líderes, parceiros ocultos)
+            const slots = [
+                { id: 'leader1-select', random: '-- Sem líder fixo (aleatório) --' },
+                { id: 'coleader1-select', random: '-- Nenhum --', allowRandom: true },
+                { id: 'leader2-select', random: '-- Sem líder fixo (aleatório) --' },
+                { id: 'coleader2-select', random: '-- Nenhum --', allowRandom: true },
+                { id: 'partner1-select', random: '-- Nenhum --' },
+                { id: 'partner2-select', random: '-- Nenhum --' }
+            ];
+            const chosen = {};
+            const used = new Set();
+            slots.forEach(sl => {
+                let v = document.getElementById(sl.id).value;
+                if (v !== 'random' && (!activePlayers.some(p => p.id === v) || used.has(v))) v = '';
+                if (v && v !== 'random') used.add(v);
+                chosen[sl.id] = v;
+            });
+            slots.forEach(sl => {
+                let opts = `<option value="">${sl.random}</option>`;
+                if (sl.allowRandom) opts += `<option value="random" ${chosen[sl.id] === 'random' ? 'selected' : ''}>Aleatório (sorteado na equipe)</option>`;
                 activePlayers.forEach(p => {
-                    const disabled = p.id === blockedVal ? 'disabled' : '';
-                    const suffix = p.id === blockedVal ? ' (Já é líder do outro time)' : '';
-                    const selected = p.id === selectedVal && p.id !== blockedVal ? 'selected' : '';
-                    opts += `<option value="${p.id}" ${selected} ${disabled}>${escapeHtml(p.name)}${suffix}</option>`;
+                    if (used.has(p.id) && chosen[sl.id] !== p.id) return;
+                    opts += `<option value="${p.id}" ${chosen[sl.id] === p.id ? 'selected' : ''}>${escapeHtml(p.name)}</option>`;
                 });
-                return opts;
-            };
-
-            const validPrevL1 = activePlayers.some(p => p.id === prevL1) ? prevL1 : '';
-            const validPrevL2 = activePlayers.some(p => p.id === prevL2) ? prevL2 : '';
-
-            leader1Sel.innerHTML = buildOptions(validPrevL1, validPrevL2);
-            leader2Sel.innerHTML = buildOptions(validPrevL2, validPrevL1);
-
-            // Parceiro extra (visível só para admin logado)
-            const p1Sel = document.getElementById('partner1-select');
-            const p2Sel = document.getElementById('partner2-select');
-            let prevP1 = p1Sel.value, prevP2 = p2Sel.value;
-            const taken = new Set([validPrevL1, validPrevL2].filter(Boolean));
-            if (!activePlayers.some(p => p.id === prevP1) || taken.has(prevP1)) prevP1 = '';
-            if (!activePlayers.some(p => p.id === prevP2) || taken.has(prevP2) || prevP2 === prevP1) prevP2 = '';
-            const buildPartner = (selectedVal, otherPartner) => {
-                let opts = `<option value="">-- Nenhum --</option>`;
-                activePlayers.forEach(p => {
-                    if (taken.has(p.id) || p.id === otherPartner) return;
-                    opts += `<option value="${p.id}" ${p.id === selectedVal ? 'selected' : ''}>${escapeHtml(p.name)}</option>`;
-                });
-                return opts;
-            };
-            p1Sel.innerHTML = buildPartner(prevP1, prevP2);
-            p2Sel.innerHTML = buildPartner(prevP2, prevP1);
+                document.getElementById(sl.id).innerHTML = opts;
+            });
         }
 
-        function handleLeaderChange(changedTeam) {
-            const l1 = document.getElementById('leader1-select').value;
-            const l2 = document.getElementById('leader2-select').value;
-
-            if (l1 && l1 === l2) {
-                if (changedTeam === 1) document.getElementById('leader2-select').value = '';
-                else document.getElementById('leader1-select').value = '';
-                showToast('Os dois líderes não podem ser a mesma pessoa!', 'warning');
-            }
+        function handleLeaderChange() {
             renderDrawPoolAndLeaders();
+        }
+
+        // Aleatoriedade real (crypto) sem viés de módulo
+        function secureRandInt(n) {
+            const buf = new Uint32Array(1);
+            const limit = Math.floor(0x100000000 / n) * n;
+            do { crypto.getRandomValues(buf); } while (buf[0] >= limit);
+            return buf[0] % n;
         }
 
         function fisherYatesShuffle(array) {
             const arr = [...array];
             for (let i = arr.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
+                const j = secureRandInt(i + 1);
                 [arr[i], arr[j]] = [arr[j], arr[i]];
             }
             return arr;
@@ -1518,11 +1516,13 @@
                 return;
             }
 
-            const leader1Id = document.getElementById('leader1-select').value;
-            const leader2Id = document.getElementById('leader2-select').value;
-
-            if (leader1Id && leader1Id === leader2Id) {
-                showToast('Escolha líderes diferentes para cada equipe!', 'error');
+            let leader1Id = document.getElementById('leader1-select').value;
+            let leader2Id = document.getElementById('leader2-select').value;
+            let co1 = document.getElementById('coleader1-select').value;
+            let co2 = document.getElementById('coleader2-select').value;
+            const fixedPicked = [leader1Id, leader2Id, co1, co2].filter(v => v && v !== 'random');
+            if (new Set(fixedPicked).size !== fixedPicked.length) {
+                showToast('Escolha pessoas diferentes para cada posição de líder!', 'error');
                 return;
             }
 
@@ -1543,11 +1543,10 @@
                 const team1 = [];
                 const team2 = [];
 
-                const leader1 = participants.find(p => p.id === leader1Id);
-                const leader2 = participants.find(p => p.id === leader2Id);
-
-                if (leader1) team1.push(leader1);
-                if (leader2) team2.push(leader2);
+                const fixedLeaders = new Set([leader1Id, leader2Id, co1, co2].filter(v => v && v !== 'random'));
+                const addFixed = (id, team) => { const pl = participants.find(p => p.id === id); if (pl) team.push(pl); };
+                addFixed(leader1Id, team1); addFixed(co1, team1);
+                addFixed(leader2Id, team2); addFixed(co2, team2);
 
                 const partner1 = participants.find(p => p.id === partner1Id);
                 const partner2 = participants.find(p => p.id === partner2Id);
@@ -1555,7 +1554,7 @@
                 if (partner2) team2.push(partner2);
 
                 // Remaining players excluding fixed leaders and partners
-                const fixedIds = new Set([leader1Id, leader2Id, partner1Id, partner2Id].filter(Boolean));
+                const fixedIds = new Set([...fixedLeaders, partner1Id, partner2Id].filter(Boolean));
                 const remaining = participants.filter(p => !fixedIds.has(p.id));
                 const shuffled = fisherYatesShuffle(remaining);
 
@@ -1567,20 +1566,34 @@
                         team2.push(player);
                     } else {
                         // Equal size: random coin flip for next slot
-                        if (Math.random() < 0.5) team1.push(player);
+                        if (secureRandInt(2) === 0) team1.push(player);
                         else team2.push(player);
                     }
                 });
 
-                // Mantém o líder no topo e embaralha o resto, para o parceiro não ficar sempre em 2º
-                const mix = (team, leaderId) => {
-                    const lead = team.filter(x => x.id === leaderId);
-                    return [...lead, ...fisherYatesShuffle(team.filter(x => x.id !== leaderId))];
+                // Líderes sem escolha fixa são sorteados dentro da própria equipe (nunca o parceiro oculto)
+                const hiddenPartners = new Set([partner1Id, partner2Id].filter(Boolean));
+                const pickRandom = (team, exclude) => {
+                    const pool = team.filter(x => !exclude.has(x.id) && !hiddenPartners.has(x.id));
+                    return pool.length ? pool[secureRandInt(pool.length)].id : '';
                 };
-                const team1Final = mix(team1, leader1Id);
-                const team2Final = mix(team2, leader2Id);
+                const resolveLeaders = (team, leaderId, coId) => {
+                    const ids = new Set();
+                    if (!leaderId) leaderId = pickRandom(team, new Set(coId && coId !== 'random' ? [coId] : []));
+                    if (leaderId) ids.add(leaderId);
+                    if (coId === 'random') coId = pickRandom(team, ids);
+                    if (coId) ids.add(coId);
+                    return [...ids];
+                };
+                const leaders1 = resolveLeaders(team1, leader1Id, co1);
+                const leaders2 = resolveLeaders(team2, leader2Id, co2);
 
-                lastDrawResult = { team1: team1Final, team2: team2Final, leader1Id, leader2Id };
+                // Líderes no topo; o resto embaralhado para o parceiro não ficar sempre em 2º
+                const mix = (team, leaderIds) => [
+                    ...leaderIds.map(id => team.find(x => x.id === id)).filter(Boolean),
+                    ...fisherYatesShuffle(team.filter(x => !leaderIds.includes(x.id)))
+                ];
+                lastDrawResult = { team1: mix(team1, leaders1), team2: mix(team2, leaders2), leader1Ids: leaders1, leader2Ids: leaders2 };
                 renderDrawResults();
 
                 resultsArea.classList.remove('hidden');
@@ -1604,7 +1617,7 @@
 
             const renderList = (list, leaderId, accentColor) => {
                 return list.map((p, idx) => {
-                    const isLeader = p.id === leaderId;
+                    const isLeader = leaderId.includes(p.id);
                     return `
                         <li class="px-3 py-2.5 flex items-center justify-between gap-2 ${isLeader ? 'bg-amber-500/10 rounded-lg' : ''}">
                             <div class="flex items-center gap-2.5">
@@ -1621,8 +1634,8 @@
                 }).join('');
             };
 
-            document.getElementById('result-team1-list').innerHTML = renderList(lastDrawResult.team1, lastDrawResult.leader1Id);
-            document.getElementById('result-team2-list').innerHTML = renderList(lastDrawResult.team2, lastDrawResult.leader2Id);
+            document.getElementById('result-team1-list').innerHTML = renderList(lastDrawResult.team1, lastDrawResult.leader1Ids);
+            document.getElementById('result-team2-list').innerHTML = renderList(lastDrawResult.team2, lastDrawResult.leader2Ids);
         }
 
         function copyTeamsWhatsApp() {
@@ -1635,13 +1648,13 @@
 
             text += `🟧 *${t1Name}* (${lastDrawResult.team1.length}):\n`;
             lastDrawResult.team1.forEach((p, i) => {
-                const crown = p.id === lastDrawResult.leader1Id ? ' 👑 (Líder)' : '';
+                const crown = lastDrawResult.leader1Ids.includes(p.id) ? ' 👑 (Líder)' : '';
                 text += `${i + 1}- ${p.name}${crown}\n`;
             });
 
             text += `\n🟩 *${t2Name}* (${lastDrawResult.team2.length}):\n`;
             lastDrawResult.team2.forEach((p, i) => {
-                const crown = p.id === lastDrawResult.leader2Id ? ' 👑 (Líder)' : '';
+                const crown = lastDrawResult.leader2Ids.includes(p.id) ? ' 👑 (Líder)' : '';
                 text += `${i + 1}- ${p.name}${crown}\n`;
             });
 
