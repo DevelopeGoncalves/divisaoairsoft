@@ -921,6 +921,7 @@
         }
 
         function togglePlayerPayment(playerId) {
+            if (!window.fb.isLoggedIn()) { requireAdmin(() => togglePlayerPayment(playerId)); return; }
             const player = appState.players.find(p => p.id === playerId);
             if (!player) return;
 
@@ -937,6 +938,7 @@
         }
 
         function promoteSubToPaid(subId) {
+            if (!window.fb.isLoggedIn()) { requireAdmin(() => promoteSubToPaid(subId)); return; }
             const subIndex = appState.subs.findIndex(s => s.id === subId);
             if (subIndex === -1) return;
             const sub = appState.subs[subIndex];
@@ -1005,7 +1007,10 @@
                 }
                 showToast(`${name} adicionado à lista de suplentes.`);
             } else {
-                const isPaid = target === 'main-paid';
+                if (target === 'main-paid' && !window.fb.isLoggedIn()) {
+                    showToast('Só o admin pode adicionar já como pago. Adicionado como pendente.', 'info');
+                }
+                const isPaid = target === 'main-paid' && window.fb.isLoggedIn();
                 if (appState.players.length >= MAX_MAIN_SLOTS) {
                     if (isPaid) {
                         // Se já pagou e lista tá cheia, aplica a regra de substituir o último não pagante
@@ -1308,6 +1313,7 @@
         }
 
         function openImportModal() {
+            if (!window.fb.isLoggedIn()) { requireAdmin(openImportModal); return; }
             document.getElementById('import-textarea').value = '';
             document.getElementById('modal-import').classList.remove('hidden');
         }
