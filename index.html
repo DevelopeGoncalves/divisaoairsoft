@@ -757,6 +757,9 @@
         // AUTH (somente edição das informações do jogo)
         // ==========================================
         let pendingAdminAction = null;
+        function adminOnlyNotice() {
+            showToast('Somente o administrador pode alterar o status de pagamento.', 'warning');
+        }
         function requireAdmin(action) {
             if (window.fb && window.fb.isLoggedIn()) { action(); return; }
             pendingAdminAction = action;
@@ -933,7 +936,7 @@
         }
 
         function togglePlayerPayment(playerId) {
-            if (!window.fb.isLoggedIn()) { requireAdmin(() => togglePlayerPayment(playerId)); return; }
+            if (!window.fb.isLoggedIn()) { adminOnlyNotice(); return; }
             const player = appState.players.find(p => p.id === playerId);
             if (!player) return;
 
@@ -950,7 +953,7 @@
         }
 
         function promoteSubToPaid(subId) {
-            if (!window.fb.isLoggedIn()) { requireAdmin(() => promoteSubToPaid(subId)); return; }
+            if (!window.fb.isLoggedIn()) { adminOnlyNotice(); return; }
             const subIndex = appState.subs.findIndex(s => s.id === subId);
             if (subIndex === -1) return;
             const sub = appState.subs[subIndex];
@@ -1325,7 +1328,7 @@
         }
 
         function openImportModal() {
-            if (!window.fb.isLoggedIn()) { requireAdmin(openImportModal); return; }
+            if (!window.fb.isLoggedIn()) { adminOnlyNotice(); return; }
             document.getElementById('import-textarea').value = '';
             document.getElementById('modal-import').classList.remove('hidden');
         }
