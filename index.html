@@ -623,12 +623,14 @@
         const rosterRef = doc(db, 'airsoft', 'roster');
         const drawRef = doc(db, 'airsoft', 'draw');
         const drawAdminRef = doc(db, 'airsoft', 'draw_admin');
+        const setupRef = doc(db, 'airsoft', 'draw_setup');
         let unsubAdminDraw = null;
 
         window.fb = {
             saveRoster: (data) => setDoc(rosterRef, data),
             saveEvent: (data) => setDoc(eventRef, data),
             saveDraw: (data) => setDoc(drawRef, data),
+            saveSetup: (data) => setDoc(setupRef, data),
             saveDrawAdmin: (data) => setDoc(drawAdminRef, data),
             login: (email, pass) => signInWithEmailAndPassword(auth, email, pass),
             logout: () => signOut(auth),
@@ -649,6 +651,12 @@
         onSnapshot(eventRef, (snap) => {
             if (snap.metadata.hasPendingWrites) return;
             if (snap.exists()) window.applyRemote({ event: snap.data() });
+        }, (e) => console.error(e));
+
+        // Líderes principais e nomes das equipes (definidos pelo admin) em tempo real
+        onSnapshot(setupRef, (snap) => {
+            if (snap.metadata.hasPendingWrites || !snap.exists()) return;
+            window.applyRemoteSetup(snap.data());
         }, (e) => console.error(e));
 
         // Sorteio público em tempo real (sem dados ocultos de admin)
@@ -748,6 +756,7 @@
         let selectedForDraw = new Set();
         let lastDrawResult = { team1: [], team2: [], pub1: [], pub2: [], leader1Ids: [], leader2Ids: [] };
         let adminDrawData = null;
+        let remoteSetup = null;
 
         function saveState() {
             // Grava lista no Firestore (aberto a todos). Informações do jogo só via saveEventInfo (admin).
@@ -815,6 +824,7 @@
             document.querySelectorAll('[data-admin-only]').forEach(el => el.style.display = user ? "" : "none");
             if (!user) ['partner1-select', 'partner2-select', 'coleader1-select', 'coleader2-select'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
             if (typeof renderDrawPoolAndLeaders === 'function') renderDrawPoolAndLeaders();
+            if (typeof applySetupLock === 'function') applySetupLock();
             if (typeof renderDrawResults === 'function' && lastDrawResult.team1.length) renderDrawResults();
         };
 
@@ -1450,6 +1460,7 @@
                 appState.players.forEach(p => selectedForDraw.add(p.id));
             }
             renderDrawPoolAndLeaders();
+            pushSetup();
         }
 
         function toggleDrawParticipant(playerId) {
@@ -1459,10 +1470,15 @@
                 selectedForDraw.add(playerId);
             }
             renderDrawPoolAndLeaders();
+            pushSetup();
         }
 
         function renderDrawPoolAndLeaders() {
             const poolContainer = document.getElementById('draw-pool-container');
+            // Visitantes sempre incluem os líderes definidos pelo admin
+            if (!isAdminNow() && remoteSetup) {
+                [remoteSetup.leader1Id, remoteSetup.leader2Id].filter(Boolean).forEach(id => selectedForDraw.add(id));
+            }
             document.getElementById('draw-selected-count').textContent = selectedForDraw.size;
 
             // Render checkboxes
@@ -1496,6 +1512,8 @@
             const used = new Set();
             slots.forEach(sl => {
                 let v = document.getElementById(sl.id).value;
+                if (!isAdminNow() && remoteSetup && sl.id === 'leader1-select') v = remoteSetup.leader1Id || '';
+                if (!isAdminNow() && remoteSetup && sl.id === 'leader2-select') v = remoteSetup.leader2Id || '';
                 if (v !== 'random' && (!activePlayers.some(p => p.id === v) || used.has(v))) v = '';
                 if (v && v !== 'random') used.add(v);
                 chosen[sl.id] = v;
@@ -1513,6 +1531,7 @@
 
         function handleLeaderChange() {
             renderDrawPoolAndLeaders();
+            pushSetup();
         }
 
         // Aleatoriedade real (crypto) sem viés de módulo
@@ -1645,6 +1664,39 @@
         }
 
         // Quem não é admin vê só o líder principal; o segundo líder fica oculto
+        // ---- Configuração do sorteio (líderes principais + nomes) em tempo real ----
+        function isAdminNow() { return !!(window.fb && window.fb.isLoggedIn()); }
+
+        function pushSetup() {
+            if (!isAdminNow()) return;
+            const data = {
+                leader1Id: document.getElementById('leader1-select').value,
+                leader2Id: document.getElementById('leader2-select').value,
+                t1Name: document.getElementById('team1-name').value,
+                t2Name: document.getElementById('team2-name').value
+            };
+            remoteSetup = data;
+            window.fb.saveSetup(data).catch(e => console.error(e));
+        }
+
+        function applySetupLock() {
+            const lock = !isAdminNow();
+            ['leader1-select', 'leader2-select'].forEach(id => { document.getElementById(id).disabled = lock; });
+            ['team1-name', 'team2-name'].forEach(id => { document.getElementById(id).readOnly = lock; });
+        }
+
+        window.applyRemoteSetup = function (d) {
+            remoteSetup = d;
+            document.getElementById('team1-name').value = d.t1Name || document.getElementById('team1-name').value;
+            document.getElementById('team2-name').value = d.t2Name || document.getElementById('team2-name').value;
+            [d.leader1Id, d.leader2Id].filter(Boolean).forEach(id => selectedForDraw.add(id));
+            renderDrawPoolAndLeaders();
+            document.getElementById('leader1-select').value = d.leader1Id || '';
+            document.getElementById('leader2-select').value = d.leader2Id || '';
+            renderDrawPoolAndLeaders();
+            applySetupLock();
+        };
+
         // ---- Sorteio em tempo real ----
         const slim = (list) => list.map(x => ({ id: x.id, name: x.name }));
         function publishDraw() {
@@ -1806,6 +1858,8 @@
         window.addEventListener('DOMContentLoaded', () => {
             normalizeRosterOrder();
             renderAll();
+            applySetupLock();
+            ['team1-name', 'team2-name'].forEach(id => document.getElementById(id).addEventListener('input', pushSetup));
         });
     </script>
 </body>
