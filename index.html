@@ -1566,7 +1566,15 @@
                     }
                 });
 
-                lastDrawResult = { team1, team2, leader1Id, leader2Id };
+                // Mantém o líder no topo e embaralha o resto, para o parceiro não ficar sempre em 2º
+                const mix = (team, leaderId) => {
+                    const lead = team.filter(x => x.id === leaderId);
+                    return [...lead, ...fisherYatesShuffle(team.filter(x => x.id !== leaderId))];
+                };
+                const team1Final = mix(team1, leader1Id);
+                const team2Final = mix(team2, leader2Id);
+
+                lastDrawResult = { team1: team1Final, team2: team2Final, leader1Id, leader2Id };
                 renderDrawResults();
 
                 resultsArea.classList.remove('hidden');
