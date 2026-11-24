@@ -1,0 +1,14 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Lista de jogadores/suplentes: todos leem e editam
+    match /airsoft/roster {
+      allow read, write: if true;
+    }
+    // Informações do jogo (dia, local, valores, PIX): todos leem, só admin logado edita
+    match /airsoft/event {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
+}
