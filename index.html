@@ -727,7 +727,7 @@
         window.appState = appState;
         window.DEFAULT_STATE = DEFAULT_STATE;
         let selectedForDraw = new Set();
-        let lastDrawResult = { team1: [], team2: [], leader1Ids: [], leader2Ids: [] };
+        let lastDrawResult = { team1: [], team2: [], pub1: [], pub2: [], leader1Ids: [], leader2Ids: [] };
 
         function saveState() {
             // Grava lista no Firestore (aberto a todos). Informações do jogo só via saveEventInfo (admin).
@@ -1598,7 +1598,16 @@
                     ...leaderIds.map(id => team.find(x => x.id === id)).filter(Boolean),
                     ...fisherYatesShuffle(team.filter(x => !leaderIds.includes(x.id)))
                 ];
-                lastDrawResult = { team1: mix(team1, leaders1), team2: mix(team2, leaders2), leader1Ids: leaders1, leader2Ids: leaders2 };
+                // Ordem pública: só o líder principal no topo; segundo líder e parceiro ficam misturados no grupo
+                const mixPublic = (team, leaderIds) => [
+                    ...leaderIds.slice(0, 1).map(id => team.find(x => x.id === id)).filter(Boolean),
+                    ...fisherYatesShuffle(team.filter(x => x.id !== leaderIds[0]))
+                ];
+                lastDrawResult = {
+                    team1: mix(team1, leaders1), team2: mix(team2, leaders2),
+                    pub1: mixPublic(team1, leaders1), pub2: mixPublic(team2, leaders2),
+                    leader1Ids: leaders1, leader2Ids: leaders2
+                };
                 renderDrawResults();
 
                 resultsArea.classList.remove('hidden');
@@ -1612,6 +1621,11 @@
         }
 
         // Quem não é admin vê só o líder principal; o segundo líder fica oculto
+        function teamView(n) {
+            const admin = window.fb && window.fb.isLoggedIn();
+            return admin ? lastDrawResult['team' + n] : lastDrawResult['pub' + n];
+        }
+
         function visibleLeaders(ids) {
             return (window.fb && window.fb.isLoggedIn()) ? ids : ids.slice(0, 1);
         }
@@ -1644,8 +1658,8 @@
                 }).join('');
             };
 
-            document.getElementById('result-team1-list').innerHTML = renderList(lastDrawResult.team1, lastDrawResult.leader1Ids);
-            document.getElementById('result-team2-list').innerHTML = renderList(lastDrawResult.team2, lastDrawResult.leader2Ids);
+            document.getElementById('result-team1-list').innerHTML = renderList(teamView(1), lastDrawResult.leader1Ids);
+            document.getElementById('result-team2-list').innerHTML = renderList(teamView(2), lastDrawResult.leader2Ids);
         }
 
         function copyTeamsWhatsApp() {
@@ -1657,13 +1671,13 @@
             let text = `⚔️ *DIVISÃO DE EQUIPES - ${appState.event.local.toUpperCase()}* ⚔️\n\n`;
 
             text += `🟧 *${t1Name}* (${lastDrawResult.team1.length}):\n`;
-            lastDrawResult.team1.forEach((p, i) => {
+            teamView(1).forEach((p, i) => {
                 const crown = visibleLeaders(lastDrawResult.leader1Ids).includes(p.id) ? ' 👑 (Líder)' : '';
                 text += `${i + 1}- ${p.name}${crown}\n`;
             });
 
             text += `\n🟩 *${t2Name}* (${lastDrawResult.team2.length}):\n`;
-            lastDrawResult.team2.forEach((p, i) => {
+            teamView(2).forEach((p, i) => {
                 const crown = visibleLeaders(lastDrawResult.leader2Ids).includes(p.id) ? ' 👑 (Líder)' : '';
                 text += `${i + 1}- ${p.name}${crown}\n`;
             });
