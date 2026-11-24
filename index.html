@@ -1,0 +1,1572 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Airsoft Ops | Controle de Lista & Sorteio Tático</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & Chakra Petch (Tactical feel) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        tactical: ['Chakra Petch', 'sans-serif'],
+                    },
+                    colors: {
+                        tactical: {
+                            bg: '#0d100e',
+                            card: '#151a17',
+                            surface: '#1d2420',
+                            border: '#2c3630',
+                            olive: '#4d6b43',
+                            oliveLight: '#688f5b',
+                            orange: '#f97316',
+                            orangeHover: '#ea580c',
+                            amber: '#f59e0b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0d100e;
+            color: #e5e7eb;
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .font-tactical {
+            font-family: 'Chakra Petch', sans-serif;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0d100e;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2c3630;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4d6b43;
+        }
+        @keyframes pulse-border {
+            0%, 100% { border-color: rgba(249, 115, 22, 0.5); }
+            50% { border-color: rgba(249, 115, 22, 1); }
+        }
+        .shuffling {
+            animation: pulse-border 0.4s infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-orange-500 selection:text-white">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-4 right-4 left-4 sm:left-auto sm:w-96 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Header & Navigation -->
+    <header class="sticky top-0 z-40 bg-[#0d100e]/95 backdrop-blur-md border-b border-[#2c3630]">
+        <div class="max-w-5xl mx-auto px-4 py-3">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <!-- Brand -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-[#4d6b43] to-[#2c3e26] border border-[#688f5b]/40 flex items-center justify-center shadow-lg">
+                            <i data-lucide="crosshair" class="w-6 h-6 text-orange-500"></i>
+                        </div>
+                        <div>
+                            <h1 class="font-tactical text-xl font-bold tracking-wider text-white uppercase leading-none">
+                                AIRSOFT <span class="text-orange-500">OPS</span>
+                            </h1>
+                            <p class="text-xs text-gray-400 mt-0.5">Gestão de Pelotão & Sorteio</p>
+                        </div>
+                    </div>
+
+                    <!-- Quick Reset Button (Mobile visible) -->
+                    <button onclick="openResetModal()" title="Restaurar lista padrão" class="sm:hidden p-2 rounded-lg bg-[#1d2420] border border-[#2c3630] text-gray-400 hover:text-white">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <!-- Navigation Tabs -->
+                <nav class="grid grid-cols-2 sm:flex bg-[#151a17] p-1 rounded-xl border border-[#2c3630]">
+                    <button id="tab-btn-lista" onclick="switchTab('lista')" class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all bg-[#4d6b43] text-white shadow">
+                        <i data-lucide="clipboard-check" class="w-4 h-4"></i>
+                        <span>Lista & Pagamentos</span>
+                    </button>
+                    <button id="tab-btn-sorteio" onclick="switchTab('sorteio')" class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all text-gray-400 hover:text-white">
+                        <i data-lucide="swords" class="w-4 h-4"></i>
+                        <span>Sorteio de Equipes</span>
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-5xl w-full mx-auto px-4 py-6">
+
+        <!-- ========================================== -->
+        <!-- TAB 1: LISTA & PAGAMENTOS                  -->
+        <!-- ========================================== -->
+        <section id="tab-lista" class="space-y-6">
+
+            <!-- Briefing / Event Card -->
+            <div class="bg-[#151a17] border border-[#2c3630] rounded-2xl p-4 sm:p-5 shadow-xl relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
+
+                <div class="flex flex-wrap items-start justify-between gap-3 pb-4 border-b border-[#2c3630]">
+                    <div>
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-500/15 text-orange-400 border border-orange-500/30 mb-2">
+                            <span class="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
+                            DATA CONFIRMADA
+                        </span>
+                        <h2 id="display-event-local" class="font-tactical text-xl sm:text-2xl font-bold text-white">
+                            Tokio Airsoft
+                        </h2>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <button onclick="openEditEventModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1d2420] hover:bg-[#26302a] border border-[#2c3630] text-xs font-medium text-gray-300 transition">
+                            <i data-lucide="edit-3" class="w-3.5 h-3.5 text-orange-400"></i>
+                            Editar Info
+                        </button>
+                        <button onclick="openResetModal()" title="Restaurar dados originais" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1d2420] hover:bg-red-950/40 border border-[#2c3630] hover:border-red-800/50 text-xs font-medium text-gray-400 hover:text-red-300 transition">
+                            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                            Resetar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Event Details Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-4 text-sm">
+                    <div class="bg-[#1d2420]/70 p-3 rounded-xl border border-[#2c3630]/80 flex items-start gap-3">
+                        <i data-lucide="calendar-clock" class="w-5 h-5 text-orange-500 shrink-0 mt-0.5"></i>
+                        <div>
+                            <p class="text-xs text-gray-400">Data e Horário</p>
+                            <p id="display-event-date" class="font-semibold text-white">29/11 das 13:30 às 16:00h</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-[#1d2420]/70 p-3 rounded-xl border border-[#2c3630]/80 flex items-start gap-3">
+                        <i data-lucide="banknote" class="w-5 h-5 text-emerald-400 shrink-0 mt-0.5"></i>
+                        <div>
+                            <p class="text-xs text-gray-400">Valor do Jogo</p>
+                            <p id="display-event-price" class="font-semibold text-white">R$ 100,00 <span class="text-xs font-normal text-gray-400">(320 BBs inclusas)</span></p>
+                        </div>
+                    </div>
+
+                    <div class="bg-[#1d2420]/70 p-3 rounded-xl border border-[#2c3630]/80 flex items-start gap-3">
+                        <i data-lucide="shield-alert" class="w-5 h-5 text-amber-400 shrink-0 mt-0.5"></i>
+                        <div>
+                            <p class="text-xs text-gray-400">Sinal / Entrada Obrigatória</p>
+                            <p id="display-event-deposit" class="font-semibold text-amber-300">R$ 20,00 para garantir vaga</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-[#1d2420]/70 p-3 rounded-xl border border-[#2c3630]/80 flex items-start gap-3">
+                        <i data-lucide="package-plus" class="w-5 h-5 text-[#688f5b] shrink-0 mt-0.5"></i>
+                        <div>
+                            <p class="text-xs text-gray-400">Plano Extra BBs</p>
+                            <p id="display-event-extra" class="font-medium text-gray-200">5 mil BBs por R$ 70,00 (dividido)</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-[#1d2420]/70 p-3 rounded-xl border border-[#2c3630]/80 flex items-start gap-3">
+                        <i data-lucide="refresh-cw" class="w-5 h-5 text-[#688f5b] shrink-0 mt-0.5"></i>
+                        <div>
+                            <p class="text-xs text-gray-400">Recarga em Campo</p>
+                            <p id="display-event-reload" class="font-medium text-gray-200">R$ 20,00 por +320 munições</p>
+                        </div>
+                    </div>
+
+                    <!-- PIX Box -->
+                    <div class="bg-gradient-to-r from-[#1d2420] to-[#232d27] p-3 rounded-xl border border-[#4d6b43]/50 flex items-center justify-between gap-2">
+                        <div class="min-w-0">
+                            <p class="text-[11px] uppercase tracking-wider font-bold text-[#8ab87a]">Chave PIX (Sinal R$ 20)</p>
+                            <p id="display-event-pix" class="text-xs sm:text-sm font-mono text-white truncate select-all">ramondeoliveiracorrea@gmail.com</p>
+                        </div>
+                        <button onclick="copyPix()" class="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#4d6b43] hover:bg-[#5c8050] active:scale-95 text-white text-xs font-semibold transition shadow">
+                            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                            <span>Copiar</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Financial & Slots Summary Stats -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <div class="bg-[#151a17] border border-[#2c3630] rounded-xl p-4">
+                    <div class="flex items-center justify-between text-gray-400 mb-1">
+                        <span class="text-xs font-medium uppercase">Total de Vagas</span>
+                        <i data-lucide="users" class="w-4 h-4 text-gray-400"></i>
+                    </div>
+                    <div class="flex items-baseline gap-2">
+                        <span id="stat-occupied" class="font-tactical text-2xl font-bold text-white">38</span>
+                        <span class="text-xs text-gray-400">/ <span id="stat-max-slots">40</span> ocupadas</span>
+                    </div>
+                </div>
+
+                <div class="bg-[#151a17] border border-emerald-900/50 rounded-xl p-4">
+                    <div class="flex items-center justify-between text-emerald-400 mb-1">
+                        <span class="text-xs font-medium uppercase">Pagantes (✅)</span>
+                        <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                    </div>
+                    <div class="flex items-baseline gap-2">
+                        <span id="stat-paid" class="font-tactical text-2xl font-bold text-emerald-400">27</span>
+                        <span class="text-xs text-emerald-500/80">confirmados</span>
+                    </div>
+                </div>
+
+                <div class="bg-[#151a17] border border-red-900/40 rounded-xl p-4">
+                    <div class="flex items-center justify-between text-red-400 mb-1">
+                        <span class="text-xs font-medium uppercase">Pendentes (❌)</span>
+                        <i data-lucide="clock" class="w-4 h-4"></i>
+                    </div>
+                    <div class="flex items-baseline gap-2">
+                        <span id="stat-unpaid" class="font-tactical text-2xl font-bold text-red-400">11</span>
+                        <span class="text-xs text-red-400/70">aguardando</span>
+                    </div>
+                </div>
+
+                <div class="bg-[#151a17] border border-orange-900/40 rounded-xl p-4">
+                    <div class="flex items-center justify-between text-orange-400 mb-1">
+                        <span class="text-xs font-medium uppercase">Sinais Recebidos</span>
+                        <i data-lucide="wallet" class="w-4 h-4"></i>
+                    </div>
+                    <div class="flex items-baseline gap-1">
+                        <span id="stat-money" class="font-tactical text-2xl font-bold text-orange-400">R$ 540</span>
+                        <span class="text-xs text-gray-400">,00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Toolbar -->
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-[#151a17] p-3.5 rounded-xl border border-[#2c3630]">
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="openImportModal()" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#1d2420] hover:bg-[#28322c] border border-[#3a473f] text-sm font-semibold text-gray-200 transition">
+                        <i data-lucide="file-down" class="w-4 h-4 text-orange-400"></i>
+                        <span>Colar / Importar Lista</span>
+                    </button>
+
+                    <button onclick="copyWhatsAppList()" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-sm font-bold text-white shadow-lg shadow-orange-950/40 transition active:scale-[0.98]">
+                        <i data-lucide="share-2" class="w-4 h-4"></i>
+                        <span>Copiar Lista p/ WhatsApp</span>
+                    </button>
+                </div>
+
+                <!-- Search filter -->
+                <div class="relative">
+                    <i data-lucide="search" class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                    <input type="text" id="search-player" oninput="renderMainList()" placeholder="Buscar operador..." class="w-full sm:w-56 pl-9 pr-3 py-2 bg-[#0d100e] border border-[#2c3630] focus:border-orange-500 rounded-xl text-sm text-white placeholder-gray-500 outline-none">
+                </div>
+            </div>
+
+            <!-- Quick Add Player Form -->
+            <form onsubmit="handleAddPlayer(event)" class="bg-[#151a17] p-3.5 rounded-xl border border-[#2c3630] flex flex-col sm:flex-row gap-2.5">
+                <input type="text" id="new-player-name" placeholder="Nome do novo jogador (ex: Lucas (Felipe))" required class="flex-1 px-3.5 py-2.5 bg-[#0d100e] border border-[#2c3630] focus:border-[#688f5b] rounded-xl text-sm text-white placeholder-gray-500 outline-none">
+                <div class="flex gap-2">
+                    <select id="new-player-target" class="px-3 py-2.5 bg-[#0d100e] border border-[#2c3630] rounded-xl text-sm text-gray-200 outline-none">
+                        <option value="main-unpaid">Lista Principal (Pendente ❌)</option>
+                        <option value="main-paid">Lista Principal (Já Pagou ✅)</option>
+                        <option value="sub">Lista de Suplentes</option>
+                    </select>
+                    <button type="submit" class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#4d6b43] hover:bg-[#5c8050] text-sm font-semibold text-white transition shrink-0">
+                        <i data-lucide="user-plus" class="w-4 h-4"></i>
+                        <span>Adicionar</span>
+                    </button>
+                </div>
+            </form>
+
+            <!-- Main 40-Slot Roster -->
+            <div class="bg-[#151a17] border border-[#2c3630] rounded-2xl overflow-hidden shadow-xl">
+                <div class="px-4 py-3.5 bg-[#1a211d] border-b border-[#2c3630] flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="list-ordered" class="w-5 h-5 text-orange-500"></i>
+                        <h3 class="font-tactical text-lg font-bold text-white uppercase tracking-wide">
+                            Lista Oficial (40 Vagas)
+                        </h3>
+                    </div>
+                    <span class="text-xs text-gray-400">
+                        Toque em <strong class="text-emerald-400">Pago</strong> / <strong class="text-red-400">Pendente</strong> para atualizar
+                    </span>
+                </div>
+
+                <div id="main-roster-container" class="divide-y divide-[#232b26]">
+                    <!-- Rendered dynamically via JS -->
+                </div>
+            </div>
+
+            <!-- Substitutes (Suplentes) Section -->
+            <div class="bg-[#151a17] border border-[#2c3630] rounded-2xl overflow-hidden shadow-xl">
+                <div class="px-4 py-3.5 bg-[#1a211d] border-b border-[#2c3630] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="user-check" class="w-5 h-5 text-amber-400"></i>
+                            <h3 class="font-tactical text-lg font-bold text-white uppercase tracking-wide">
+                                Lista de Suplentes
+                            </h3>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-0.5">
+                            Regra: Se o suplente pagar (✅), assume automaticamente a vaga do <strong class="text-amber-300">último não-pagante</strong> da lista acima!
+                        </p>
+                    </div>
+                    <button onclick="addEmptySubSlot()" class="self-start sm:self-center inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1d2420] hover:bg-[#28322c] border border-[#3a473f] text-xs font-semibold text-gray-200 transition">
+                        <i data-lucide="plus" class="w-3.5 h-3.5 text-amber-400"></i>
+                        Vaga Suplente
+                    </button>
+                </div>
+
+                <div id="subs-roster-container" class="divide-y divide-[#232b26]">
+                    <!-- Rendered dynamically via JS -->
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ========================================== -->
+        <!-- TAB 2: SORTEIO DE EQUIPES                  -->
+        <!-- ========================================== -->
+        <section id="tab-sorteio" class="hidden space-y-6">
+
+            <!-- Draw Configuration Card -->
+            <div class="bg-[#151a17] border border-[#2c3630] rounded-2xl p-4 sm:p-6 shadow-xl">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-[#2c3630]">
+                    <div>
+                        <h2 class="font-tactical text-xl sm:text-2xl font-bold text-white uppercase flex items-center gap-2">
+                            <i data-lucide="shield" class="w-6 h-6 text-orange-500"></i>
+                            Divisão Tática de Equipes
+                        </h2>
+                        <p class="text-xs sm:text-sm text-gray-400 mt-1">
+                            Defina os 2 líderes (um em cada time) e sorteie o restante do pelotão equilibradamente.
+                        </p>
+                    </div>
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#1d2420] border border-[#2c3630] text-xs font-semibold text-gray-300">
+                        <span>Selecionados p/ jogo:</span>
+                        <span id="draw-selected-count" class="text-orange-400 font-bold text-sm">27</span>
+                    </div>
+                </div>
+
+                <!-- Team Names & Leaders Selection -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
+                    <!-- Team 1 Setup -->
+                    <div class="bg-[#1d2420]/80 border border-orange-500/30 rounded-xl p-4 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold uppercase tracking-wider text-orange-400 flex items-center gap-1.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
+                                Esquadrão 1
+                            </span>
+                            <i data-lucide="crown" class="w-4 h-4 text-orange-400"></i>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Nome da Equipe 1</label>
+                            <input type="text" id="team1-name" value="EQUIPE ALPHA (Laranja)" class="w-full px-3 py-2 bg-[#0d100e] border border-[#2c3630] focus:border-orange-500 rounded-lg text-sm font-semibold text-white outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Líder Fixo da Equipe 1</label>
+                            <select id="leader1-select" onchange="handleLeaderChange(1)" class="w-full px-3 py-2.5 bg-[#0d100e] border border-orange-500/40 focus:border-orange-500 rounded-lg text-sm text-white outline-none">
+                                <option value="">-- Sem líder fixo (aleatório) --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Team 2 Setup -->
+                    <div class="bg-[#1d2420]/80 border border-[#688f5b]/40 rounded-xl p-4 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold uppercase tracking-wider text-[#8ab87a] flex items-center gap-1.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-[#688f5b]"></span>
+                                Esquadrão 2
+                            </span>
+                            <i data-lucide="crown" class="w-4 h-4 text-[#8ab87a]"></i>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Nome da Equipe 2</label>
+                            <input type="text" id="team2-name" value="EQUIPE BRAVO (Verde)" class="w-full px-3 py-2 bg-[#0d100e] border border-[#2c3630] focus:border-[#688f5b] rounded-lg text-sm font-semibold text-white outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Líder Fixo da Equipe 2</label>
+                            <select id="leader2-select" onchange="handleLeaderChange(2)" class="w-full px-3 py-2.5 bg-[#0d100e] border border-[#688f5b]/40 focus:border-[#688f5b] rounded-lg text-sm text-white outline-none">
+                                <option value="">-- Sem líder fixo (aleatório) --</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Draw Button -->
+                <div class="mt-6 flex flex-col sm:flex-row gap-3">
+                    <button id="btn-draw-teams" onclick="runTeamDraw()" class="flex-1 py-3.5 px-6 rounded-xl bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 hover:from-orange-500 hover:to-amber-400 text-white font-tactical text-lg font-bold uppercase tracking-wider shadow-lg shadow-orange-950/50 flex items-center justify-center gap-2.5 transition active:scale-[0.99]">
+                        <i data-lucide="shuffle" class="w-5 h-5"></i>
+                        <span>Sortear Equipes Agora</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Draw Results Area -->
+            <div id="draw-results-area" class="hidden space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <h3 class="font-tactical text-lg font-bold text-white uppercase flex items-center gap-2">
+                        <i data-lucide="check-square" class="w-5 h-5 text-emerald-400"></i>
+                        Resultado do Sorteio
+                    </h3>
+                    <button onclick="copyTeamsWhatsApp()" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#4d6b43] hover:bg-[#5c8050] text-white text-sm font-semibold shadow transition">
+                        <i data-lucide="copy" class="w-4 h-4"></i>
+                        <span>Copiar Times p/ WhatsApp</span>
+                    </button>
+                </div>
+
+                <div id="teams-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Team 1 Card -->
+                    <div class="bg-[#151a17] border-2 border-orange-500/40 rounded-2xl overflow-hidden shadow-xl">
+                        <div class="px-4 py-3 bg-gradient-to-r from-orange-950/60 to-[#1a211d] border-b border-orange-500/30 flex items-center justify-between">
+                            <h4 id="result-team1-title" class="font-tactical font-bold text-orange-400 text-lg uppercase">EQUIPE ALPHA</h4>
+                            <span id="result-team1-count" class="px-2.5 py-0.5 rounded-full bg-orange-500/20 text-orange-300 text-xs font-bold">0 jogadores</span>
+                        </div>
+                        <ul id="result-team1-list" class="divide-y divide-[#232b26] p-2"></ul>
+                    </div>
+
+                    <!-- Team 2 Card -->
+                    <div class="bg-[#151a17] border-2 border-[#688f5b]/40 rounded-2xl overflow-hidden shadow-xl">
+                        <div class="px-4 py-3 bg-gradient-to-r from-[#243320] to-[#1a211d] border-b border-[#688f5b]/30 flex items-center justify-between">
+                            <h4 id="result-team2-title" class="font-tactical font-bold text-[#8ab87a] text-lg uppercase">EQUIPE BRAVO</h4>
+                            <span id="result-team2-count" class="px-2.5 py-0.5 rounded-full bg-[#4d6b43]/30 text-[#a3d194] text-xs font-bold">0 jogadores</span>
+                        </div>
+                        <ul id="result-team2-list" class="divide-y divide-[#232b26] p-2"></ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Participant Pool Selector -->
+            <div class="bg-[#151a17] border border-[#2c3630] rounded-2xl overflow-hidden">
+                <div class="px-4 py-3.5 bg-[#1a211d] border-b border-[#2c3630] flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                        <h3 class="font-tactical text-base font-bold text-white uppercase">
+                            Jogadores no Sorteio
+                        </h3>
+                        <p class="text-xs text-gray-400">Por padrão apenas pagantes (✅) entram, mas você pode marcar/desmarcar quem quiser.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="selectPoolPreset('paid')" class="px-3 py-1.5 rounded-lg bg-[#4d6b43]/30 hover:bg-[#4d6b43]/50 border border-[#688f5b]/40 text-xs font-semibold text-[#a3d194] transition">
+                            Só Pagantes (✅)
+                        </button>
+                        <button onclick="selectPoolPreset('all')" class="px-3 py-1.5 rounded-lg bg-[#1d2420] hover:bg-[#28322c] border border-[#2c3630] text-xs font-semibold text-gray-300 transition">
+                            Todos da Lista
+                        </button>
+                    </div>
+                </div>
+
+                <div id="draw-pool-container" class="p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-96 overflow-y-auto">
+                    <!-- Checkboxes rendered via JS -->
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- ========================================== -->
+    <!-- MODALS                                     -->
+    <!-- ========================================== -->
+
+    <!-- Modal: Import WhatsApp List -->
+    <div id="modal-import" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-[#151a17] border border-[#2c3630] rounded-2xl max-w-xl w-full p-5 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-[#2c3630] pb-3">
+                <h3 class="font-tactical text-lg font-bold text-white uppercase flex items-center gap-2">
+                    <i data-lucide="file-text" class="w-5 h-5 text-orange-500"></i>
+                    Importar Lista do WhatsApp
+                </h3>
+                <button onclick="closeModal('modal-import')" class="text-gray-400 hover:text-white p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <p class="text-xs text-gray-300 leading-relaxed">
+                Cole abaixo o texto completo da lista do mês que você usa no grupo do WhatsApp. O sistema identifica automaticamente quem tem <strong class="text-emerald-400">✅</strong> (pagante), quem não tem (pendente) e os suplentes.
+            </p>
+            <textarea id="import-textarea" rows="10" placeholder="Cole aqui a mensagem do WhatsApp com a lista..." class="w-full p-3 bg-[#0d100e] border border-[#2c3630] focus:border-orange-500 rounded-xl text-xs font-mono text-gray-200 outline-none"></textarea>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="closeModal('modal-import')" class="px-4 py-2 rounded-xl bg-[#1d2420] text-sm font-medium text-gray-300 hover:text-white">
+                    Cancelar
+                </button>
+                <button onclick="processWhatsAppImport()" class="px-5 py-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-sm font-bold text-white shadow">
+                    Processar Lista
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Edit Event Info -->
+    <div id="modal-edit-event" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-[#151a17] border border-[#2c3630] rounded-2xl max-w-lg w-full p-5 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-[#2c3630] pb-3">
+                <h3 class="font-tactical text-lg font-bold text-white uppercase">Editar Informações do Jogo</h3>
+                <button onclick="closeModal('modal-edit-event')" class="text-gray-400 hover:text-white p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="space-y-3 text-sm">
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Local do Jogo</label>
+                    <input type="text" id="edit-local" class="w-full px-3 py-2 bg-[#0d100e] border border-[#2c3630] rounded-lg text-white">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Data e Horário</label>
+                    <input type="text" id="edit-date" class="w-full px-3 py-2 bg-[#0d100e] border border-[#2c3630] rounded-lg text-white">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Valor Total (R$)</label>
+                        <input type="text" id="edit-price" class="w-full px-3 py-2 bg-[#0d100e] border border-[#2c3630] rounded-lg text-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Valor do Sinal (R$)</label>
+                        <input type="number" id="edit-deposit" class="w-full px-3 py-2 bg-[#0d100e] border border-[#2c3630] rounded-lg text-white">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Plano Extra</label>
+                    <input type="text" id="edit-extra" class="w-full px-3 py-2 bg-[#0d100e] border border-[#2c3630] rounded-lg text-white">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Recarga</label>
+                    <input type="text" id="edit-reload" class="w-full px-3 py-2 bg-[#0d100e] border border-[#2c3630] rounded-lg text-white">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Chave PIX</label>
+                    <input type="text" id="edit-pix" class="w-full px-3 py-2 bg-[#0d100e] border border-[#2c3630] rounded-lg text-white">
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="closeModal('modal-edit-event')" class="px-4 py-2 rounded-xl bg-[#1d2420] text-sm text-gray-300">Cancelar</button>
+                <button onclick="saveEventInfo()" class="px-5 py-2 rounded-xl bg-[#4d6b43] hover:bg-[#5c8050] text-sm font-bold text-white">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Edit Player Name -->
+    <div id="modal-edit-player" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-[#151a17] border border-[#2c3630] rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4">
+            <h3 class="font-tactical text-lg font-bold text-white uppercase">Editar Nome do Jogador</h3>
+            <input type="hidden" id="edit-player-id">
+            <input type="hidden" id="edit-player-list-type">
+            <input type="text" id="edit-player-input" class="w-full px-3.5 py-2.5 bg-[#0d100e] border border-[#2c3630] focus:border-orange-500 rounded-xl text-sm text-white outline-none">
+            <div class="flex justify-end gap-2">
+                <button onclick="closeModal('modal-edit-player')" class="px-4 py-2 rounded-xl bg-[#1d2420] text-sm text-gray-300">Cancelar</button>
+                <button onclick="savePlayerEdit()" class="px-5 py-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-sm font-bold text-white">Atualizar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Confirm Reset -->
+    <div id="modal-reset" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-[#151a17] border border-red-900/50 rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4">
+            <div class="flex items-center gap-3 text-red-400">
+                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+                <h3 class="font-tactical text-lg font-bold uppercase">Restaurar Lista Original?</h3>
+            </div>
+            <p class="text-sm text-gray-300">
+                Isso irá apagar as alterações feitas manualmente e voltará exatamente para a lista inicial fornecida (27 pagantes e 11 não pagantes).
+            </p>
+            <div class="flex justify-end gap-2">
+                <button onclick="closeModal('modal-reset')" class="px-4 py-2 rounded-xl bg-[#1d2420] text-sm text-gray-300">Cancelar</button>
+                <button onclick="confirmResetData()" class="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-sm font-bold text-white">Sim, Restaurar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // INITIAL DATA & STATE MANAGEMENT
+        // ==========================================
+        const STORAGE_KEY = 'airsoft_ops_data_v1';
+        const MAX_MAIN_SLOTS = 40;
+
+        const DEFAULT_STATE = {
+            event: {
+                local: 'Tokio Airsoft',
+                date: '29/11 das 13:30 às 16:00h',
+                price: 'R$ 100,00 (320 BBs inclusas)',
+                deposit: 20,
+                extra: '5 mil BBs por 70R$, podendo dividir por jogador',
+                reload: 'R$ 20,00 por mais 320 munições',
+                pix: 'ramondeoliveiracorrea@gmail.com'
+            },
+            players: [
+                // Pagantes (1 a 27)
+                { id: 'p1', name: 'Alex', paid: true },
+                { id: 'p2', name: 'Hendrik', paid: true },
+                { id: 'p3', name: 'Emanoel (Hendrik)', paid: true },
+                { id: 'p4', name: 'Alexandre', paid: true },
+                { id: 'p5', name: 'Ruan', paid: true },
+                { id: 'p6', name: 'Arthur', paid: true },
+                { id: 'p7', name: 'Felipe', paid: true },
+                { id: 'p8', name: 'Kauã', paid: true },
+                { id: 'p9', name: 'thales', paid: true },
+                { id: 'p10', name: 'Emerson', paid: true },
+                { id: 'p11', name: 'Victor', paid: true },
+                { id: 'p12', name: 'Jp', paid: true },
+                { id: 'p13', name: 'Mazek (jp)', paid: true },
+                { id: 'p14', name: 'Aleydson (Jean)', paid: true },
+                { id: 'p15', name: 'Cleider (Kauã)', paid: true },
+                { id: 'p16', name: 'jão moura', paid: true },
+                { id: 'p17', name: 'Alberto', paid: true },
+                { id: 'p18', name: 'Welisson (Kauã)', paid: true },
+                { id: 'p19', name: 'Davi Emanoel', paid: true },
+                { id: 'p20', name: 'Fernando (Felipe)', paid: true },
+                { id: 'p21', name: 'Geovane (Arthur)', paid: true },
+                { id: 'p22', name: 'Kamu', paid: true },
+                { id: 'p23', name: 'Carlos (Emanoel)', paid: true },
+                { id: 'p24', name: 'João Victor Vorcaro', paid: true },
+                { id: 'p25', name: 'Cesana (Emanuel)', paid: true },
+                { id: 'p26', name: 'William (jp)', paid: true },
+                { id: 'p27', name: 'Davi', paid: true },
+                // Não Pagantes (28 a 38)
+                { id: 'p28', name: 'Alan', paid: false },
+                { id: 'p29', name: 'Calebe', paid: false },
+                { id: 'p30', name: 'Raony (Felipe)', paid: false },
+                { id: 'p31', name: 'Caio', paid: false },
+                { id: 'p32', name: 'Vitor', paid: false },
+                { id: 'p33', name: 'Daniel', paid: false },
+                { id: 'p34', name: 'Alisson', paid: false },
+                { id: 'p35', name: 'Miguel (João)', paid: false },
+                { id: 'p36', name: 'Lucas (João)', paid: false },
+                { id: 'p37', name: 'Vinícius (João)', paid: false },
+                { id: 'p38', name: 'Wesley (João)', paid: false }
+            ],
+            subs: [
+                { id: 's1', name: '' },
+                { id: 's2', name: '' },
+                { id: 's3', name: '' },
+                { id: 's4', name: '' }
+            ]
+        };
+
+        let appState = loadState();
+        let selectedForDraw = new Set();
+        let lastDrawResult = { team1: [], team2: [], leader1Id: '', leader2Id: '' };
+
+        function loadState() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (parsed && Array.isArray(parsed.players)) {
+                        return parsed;
+                    }
+                }
+            } catch (e) {
+                console.error('Erro ao ler localStorage:', e);
+            }
+            return JSON.parse(JSON.stringify(DEFAULT_STATE));
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+            } catch (e) {
+                console.error('Erro ao salvar no localStorage:', e);
+            }
+        }
+
+        function uid() {
+            return 'id_' + Math.random().toString(36).substring(2, 9);
+        }
+
+        // ==========================================
+        // TOAST NOTIFICATIONS
+        // ==========================================
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const styles = {
+                success: 'bg-[#1a261d] border-emerald-500/60 text-emerald-200',
+                info: 'bg-[#1d2420] border-orange-500/60 text-orange-200',
+                warning: 'bg-[#292115] border-amber-500/60 text-amber-200',
+                error: 'bg-[#2b1616] border-red-500/60 text-red-200'
+            };
+
+            const icons = {
+                success: 'check-circle-2',
+                info: 'info',
+                warning: 'arrow-left-right',
+                error: 'alert-circle'
+            };
+
+            toast.className = `pointer-events-auto flex items-start gap-2.5 p-3.5 rounded-xl border shadow-2xl backdrop-blur-md transition-all duration-300 transform translate-y-2 opacity-0 ${styles[type] || styles.success}`;
+            toast.innerHTML = `
+                <i data-lucide="${icons[type] || 'info'}" class="w-5 h-5 shrink-0 mt-0.5"></i>
+                <p class="text-xs sm:text-sm font-medium leading-snug">${message}</p>
+            `;
+
+            container.appendChild(toast);
+            lucide.createIcons({ root: toast });
+
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            });
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // ==========================================
+        // NAVIGATION & TABS
+        // ==========================================
+        function switchTab(tabName) {
+            const listaSec = document.getElementById('tab-lista');
+            const sorteioSec = document.getElementById('tab-sorteio');
+            const btnLista = document.getElementById('tab-btn-lista');
+            const btnSorteio = document.getElementById('tab-btn-sorteio');
+
+            if (tabName === 'lista') {
+                listaSec.classList.remove('hidden');
+                sorteioSec.classList.add('hidden');
+                btnLista.className = 'flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all bg-[#4d6b43] text-white shadow';
+                btnSorteio.className = 'flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all text-gray-400 hover:text-white';
+            } else {
+                listaSec.classList.add('hidden');
+                sorteioSec.classList.remove('hidden');
+                btnSorteio.className = 'flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all bg-orange-600 text-white shadow';
+                btnLista.className = 'flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all text-gray-400 hover:text-white';
+                initDrawTab();
+            }
+        }
+
+        // ==========================================
+        // EVENT INFO RENDERING & EDITING
+        // ==========================================
+        function renderEventInfo() {
+            const ev = appState.event;
+            document.getElementById('display-event-local').textContent = ev.local;
+            document.getElementById('display-event-date').textContent = ev.date;
+            document.getElementById('display-event-price').textContent = ev.price;
+            document.getElementById('display-event-deposit').textContent = `R$ ${ev.deposit},00 para garantir vaga`;
+            document.getElementById('display-event-extra').textContent = ev.extra;
+            document.getElementById('display-event-reload').textContent = ev.reload;
+            document.getElementById('display-event-pix').textContent = ev.pix;
+        }
+
+        function openEditEventModal() {
+            const ev = appState.event;
+            document.getElementById('edit-local').value = ev.local;
+            document.getElementById('edit-date').value = ev.date;
+            document.getElementById('edit-price').value = ev.price;
+            document.getElementById('edit-deposit').value = ev.deposit;
+            document.getElementById('edit-extra').value = ev.extra;
+            document.getElementById('edit-reload').value = ev.reload;
+            document.getElementById('edit-pix').value = ev.pix;
+            document.getElementById('modal-edit-event').classList.remove('hidden');
+        }
+
+        function saveEventInfo() {
+            appState.event = {
+                local: document.getElementById('edit-local').value.trim() || 'Tokio Airsoft',
+                date: document.getElementById('edit-date').value.trim(),
+                price: document.getElementById('edit-price').value.trim(),
+                deposit: Number(document.getElementById('edit-deposit').value) || 20,
+                extra: document.getElementById('edit-extra').value.trim(),
+                reload: document.getElementById('edit-reload').value.trim(),
+                pix: document.getElementById('edit-pix').value.trim()
+            };
+            saveState();
+            renderEventInfo();
+            updateStats();
+            closeModal('modal-edit-event');
+            showToast('Informações do jogo atualizadas!');
+        }
+
+        function copyPix() {
+            copyTextToClipboard(appState.event.pix, 'Chave PIX copiada para a área de transferência!');
+        }
+
+        // ==========================================
+        // ROSTER LOGIC (SORTING, PAYMENT, SUBS RULE)
+        // ==========================================
+        function normalizeRosterOrder() {
+            // Pagantes sempre no topo mantendo sua ordem relativa, não pagantes logo abaixo
+            const paid = appState.players.filter(p => p.paid);
+            const unpaid = appState.players.filter(p => !p.paid);
+            appState.players = [...paid, ...unpaid];
+        }
+
+        function updateStats() {
+            const paidCount = appState.players.filter(p => p.paid).length;
+            const unpaidCount = appState.players.filter(p => !p.paid).length;
+            const totalOccupied = appState.players.length;
+            const totalMoney = paidCount * (appState.event.deposit || 20);
+
+            document.getElementById('stat-occupied').textContent = totalOccupied;
+            document.getElementById('stat-paid').textContent = paidCount;
+            document.getElementById('stat-unpaid').textContent = unpaidCount;
+            document.getElementById('stat-money').textContent = `R$ ${totalMoney}`;
+        }
+
+        function togglePlayerPayment(playerId) {
+            const player = appState.players.find(p => p.id === playerId);
+            if (!player) return;
+
+            player.paid = !player.paid;
+            normalizeRosterOrder();
+            saveState();
+            renderAll();
+
+            if (player.paid) {
+                showToast(`✅ ${player.name} marcado como PAGO e movido para o topo!`);
+            } else {
+                showToast(`❌ ${player.name} movido para pendentes.`, 'info');
+            }
+        }
+
+        function promoteSubToPaid(subId) {
+            const subIndex = appState.subs.findIndex(s => s.id === subId);
+            if (subIndex === -1) return;
+            const sub = appState.subs[subIndex];
+
+            if (!sub.name || !sub.name.trim()) {
+                showToast('Digite o nome do suplente antes de confirmar o pagamento.', 'warning');
+                return;
+            }
+
+            const subName = sub.name.trim();
+
+            // Caso 1: Ainda há vagas livres na lista principal (< 40)
+            if (appState.players.length < MAX_MAIN_SLOTS) {
+                appState.players.push({ id: uid(), name: subName, paid: true });
+                sub.name = ''; // Libera a vaga do suplente
+                normalizeRosterOrder();
+                saveState();
+                renderAll();
+                showToast(`✅ ${subName} pagou e ocupou uma vaga livre na lista principal!`);
+                return;
+            }
+
+            // Caso 2: Lista principal está cheia (40 vagas). Procura o ÚLTIMO não-pagante da lista principal
+            let lastUnpaidIndex = -1;
+            for (let i = appState.players.length - 1; i >= 0; i--) {
+                if (!appState.players[i].paid) {
+                    lastUnpaidIndex = i;
+                    break;
+                }
+            }
+
+            if (lastUnpaidIndex === -1) {
+                showToast('Todos os 40 jogadores da lista principal já pagaram! Não há vaga de não-pagante para substituir.', 'error');
+                return;
+            }
+
+            // Realiza a troca conforme a regra do grupo
+            const bumpedPlayer = appState.players[lastUnpaidIndex];
+            appState.players[lastUnpaidIndex] = { id: uid(), name: subName, paid: true };
+            sub.name = bumpedPlayer.name; // O último não-pagante vai para a vaga do suplente
+
+            normalizeRosterOrder();
+            saveState();
+            renderAll();
+
+            showToast(
+                `🔄 Troca realizada! <strong>${subName}</strong> (✅ Pago) entrou na lista principal no lugar de <strong>${bumpedPlayer.name}</strong> (movido para suplentes).`,
+                'warning'
+            );
+        }
+
+        function handleAddPlayer(e) {
+            e.preventDefault();
+            const input = document.getElementById('new-player-name');
+            const target = document.getElementById('new-player-target').value;
+            const name = input.value.trim();
+            if (!name) return;
+
+            if (target === 'sub') {
+                // Tenta preencher primeiro uma vaga vazia de suplente
+                const emptySub = appState.subs.find(s => !s.name.trim());
+                if (emptySub) {
+                    emptySub.name = name;
+                } else {
+                    appState.subs.push({ id: uid(), name });
+                }
+                showToast(`${name} adicionado à lista de suplentes.`);
+            } else {
+                const isPaid = target === 'main-paid';
+                if (appState.players.length >= MAX_MAIN_SLOTS) {
+                    if (isPaid) {
+                        // Se já pagou e lista tá cheia, aplica a regra de substituir o último não pagante
+                        let lastUnpaidIdx = -1;
+                        for (let i = appState.players.length - 1; i >= 0; i--) {
+                            if (!appState.players[i].paid) { lastUnpaidIdx = i; break; }
+                        }
+                        if (lastUnpaidIdx !== -1) {
+                            const bumped = appState.players[lastUnpaidIdx];
+                            appState.players[lastUnpaidIdx] = { id: uid(), name, paid: true };
+                            const emptySub = appState.subs.find(s => !s.name.trim());
+                            if (emptySub) emptySub.name = bumped.name;
+                            else appState.subs.push({ id: uid(), name: bumped.name });
+                            showToast(`Lista cheia! ${name} (✅) entrou no lugar de ${bumped.name}.`, 'warning');
+                        } else {
+                            showToast('Todas as 40 vagas já estão pagas!', 'error');
+                            return;
+                        }
+                    } else {
+                        // Vai para suplentes automaticamente se lista de 40 já está lotada
+                        const emptySub = appState.subs.find(s => !s.name.trim());
+                        if (emptySub) emptySub.name = name;
+                        else appState.subs.push({ id: uid(), name });
+                        showToast(`Lista de 40 cheia! ${name} foi colocado nos suplentes.`, 'info');
+                    }
+                } else {
+                    appState.players.push({ id: uid(), name, paid: isPaid });
+                    showToast(`${name} adicionado à lista principal!`);
+                }
+                normalizeRosterOrder();
+            }
+
+            input.value = '';
+            saveState();
+            renderAll();
+        }
+
+        function removePlayer(playerId) {
+            appState.players = appState.players.filter(p => p.id !== playerId);
+            selectedForDraw.delete(playerId);
+            saveState();
+            renderAll();
+            showToast('Jogador removido da lista.', 'info');
+        }
+
+        function updateSubName(subId, newName) {
+            const sub = appState.subs.find(s => s.id === subId);
+            if (sub) {
+                sub.name = newName;
+                saveState();
+            }
+        }
+
+        function removeSubSlot(subId) {
+            if (appState.subs.length <= 1) {
+                appState.subs[0].name = '';
+            } else {
+                appState.subs = appState.subs.filter(s => s.id !== subId);
+            }
+            saveState();
+            renderSubsList();
+        }
+
+        function addEmptySubSlot() {
+            appState.subs.push({ id: uid(), name: '' });
+            saveState();
+            renderSubsList();
+        }
+
+        function openEditPlayerModal(id, listType) {
+            const item = listType === 'main'
+                ? appState.players.find(p => p.id === id)
+                : appState.subs.find(s => s.id === id);
+            if (!item) return;
+
+            document.getElementById('edit-player-id').value = id;
+            document.getElementById('edit-player-list-type').value = listType;
+            document.getElementById('edit-player-input').value = item.name;
+            document.getElementById('modal-edit-player').classList.remove('hidden');
+            setTimeout(() => document.getElementById('edit-player-input').focus(), 50);
+        }
+
+        function savePlayerEdit() {
+            const id = document.getElementById('edit-player-id').value;
+            const listType = document.getElementById('edit-player-list-type').value;
+            const newName = document.getElementById('edit-player-input').value.trim();
+
+            if (!newName) return;
+
+            if (listType === 'main') {
+                const p = appState.players.find(x => x.id === id);
+                if (p) p.name = newName;
+            } else {
+                const s = appState.subs.find(x => x.id === id);
+                if (s) s.name = newName;
+            }
+
+            saveState();
+            renderAll();
+            closeModal('modal-edit-player');
+            showToast('Nome atualizado!');
+        }
+
+        // ==========================================
+        // RENDER LISTS (MAIN 40 & SUBS)
+        // ==========================================
+        function renderMainList() {
+            const container = document.getElementById('main-roster-container');
+            const query = document.getElementById('search-player').value.toLowerCase().trim();
+            container.innerHTML = '';
+
+            let renderedPaidDivider = false;
+            let renderedUnpaidDivider = false;
+
+            for (let i = 0; i < MAX_MAIN_SLOTS; i++) {
+                const slotNum = i + 1;
+                const player = appState.players[i];
+
+                // Filter check
+                if (query) {
+                    if (!player || !player.name.toLowerCase().includes(query)) {
+                        continue;
+                    }
+                }
+
+                // Section dividers (only when not searching)
+                if (!query && player) {
+                    if (player.paid && !renderedPaidDivider) {
+                        renderedPaidDivider = true;
+                        const paidTotal = appState.players.filter(p => p.paid).length;
+                        container.insertAdjacentHTML('beforeend', `
+                            <div class="px-4 py-2 bg-emerald-950/30 border-y border-emerald-800/30 flex items-center justify-between">
+                                <span class="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                                    ✅ PAGANTES CONFIRMADOS (${paidTotal})
+                                </span>
+                                <span class="text-[11px] text-emerald-500/80">Vaga garantida</span>
+                            </div>
+                        `);
+                    } else if (!player.paid && !renderedUnpaidDivider) {
+                        renderedUnpaidDivider = true;
+                        const unpaidTotal = appState.players.filter(p => !p.paid).length;
+                        container.insertAdjacentHTML('beforeend', `
+                            <div class="px-4 py-2 bg-red-950/25 border-y border-red-800/30 flex items-center justify-between">
+                                <span class="text-xs font-bold uppercase tracking-wider text-red-400 flex items-center gap-1.5">
+                                    ❌ NÃO PAGARAM (${unpaidTotal})
+                                </span>
+                                <span class="text-[11px] text-red-400/70">Sujeito a perda de vaga p/ suplente</span>
+                            </div>
+                        `);
+                    }
+                }
+
+                if (player) {
+                    const isLastUnpaid = !player.paid && (i === appState.players.length - 1);
+                    const rowBg = player.paid
+                        ? 'hover:bg-[#1a221d]'
+                        : 'bg-[#171414]/60 hover:bg-[#1f1a1a]';
+
+                    const statusBtn = player.paid
+                        ? `<button onclick="togglePlayerPayment('${player.id}')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-300 text-xs font-bold transition active:scale-95">
+                               <span>✅ Pago</span>
+                           </button>`
+                        : `<button onclick="togglePlayerPayment('${player.id}')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/15 hover:bg-emerald-500/20 border border-red-500/40 hover:border-emerald-500/40 text-red-300 hover:text-emerald-300 text-xs font-bold transition active:scale-95">
+                               <span>❌ Pendente</span>
+                           </button>`;
+
+                    const rowHtml = `
+                        <div class="px-3 sm:px-4 py-2.5 flex items-center justify-between gap-2 transition ${rowBg}">
+                            <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                                <span class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-mono font-bold shrink-0 ${player.paid ? 'bg-[#243028] text-emerald-300 border border-emerald-700/40' : 'bg-[#261d1d] text-gray-400 border border-red-900/30'}">
+                                    ${String(slotNum).padStart(2, '0')}
+                                </span>
+                                <div class="min-w-0">
+                                    <p class="text-sm font-medium text-white truncate">${escapeHtml(player.name)}</p>
+                                    ${isLastUnpaid ? '<span class="inline-block text-[10px] text-amber-400/90 font-medium">⚠️ Próximo a sair se um suplente pagar</span>' : ''}
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                                ${statusBtn}
+                                <button onclick="openEditPlayerModal('${player.id}', 'main')" title="Editar nome" class="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-[#252e29] transition">
+                                    <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                                </button>
+                                <button onclick="removePlayer('${player.id}')" title="Remover da lista" class="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-950/30 transition">
+                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', rowHtml);
+                } else {
+                    // Empty slot up to 40
+                    const emptyHtml = `
+                        <div class="px-3 sm:px-4 py-2 flex items-center justify-between gap-2 bg-[#111513]/60 text-gray-600">
+                            <div class="flex items-center gap-3">
+                                <span class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-mono bg-[#181d1a] text-gray-600 border border-[#242b27]">
+                                    ${String(slotNum).padStart(2, '0')}
+                                </span>
+                                <span class="text-xs italic">Vaga disponível</span>
+                            </div>
+                            <button onclick="quickFillSlot()" class="text-xs text-gray-500 hover:text-orange-400 px-2 py-1 rounded transition">
+                                + Preencher
+                            </button>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', emptyHtml);
+                }
+            }
+
+            lucide.createIcons({ root: container });
+        }
+
+        function quickFillSlot() {
+            const input = document.getElementById('new-player-name');
+            input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            input.focus();
+        }
+
+        function renderSubsList() {
+            const container = document.getElementById('subs-roster-container');
+            container.innerHTML = '';
+
+            appState.subs.forEach((sub, idx) => {
+                const hasName = sub.name && sub.name.trim().length > 0;
+                const html = `
+                    <div class="px-3 sm:px-4 py-2.5 flex items-center justify-between gap-2 hover:bg-[#1a221d] transition">
+                        <div class="flex items-center gap-3 flex-1 min-w-0">
+                            <span class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-mono font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30 shrink-0">
+                                ${idx + 1}
+                            </span>
+                            <input
+                                type="text"
+                                value="${escapeHtml(sub.name)}"
+                                onchange="updateSubName('${sub.id}', this.value)"
+                                placeholder="Nome do suplente..."
+                                class="w-full bg-transparent border-b border-transparent focus:border-amber-500/60 text-sm text-white placeholder-gray-600 py-1 outline-none"
+                            >
+                        </div>
+
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            <button
+                                onclick="promoteSubToPaid('${sub.id}')"
+                                title="Confirmar pagamento de R$ 20 e subir para lista principal"
+                                class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg ${hasName ? 'bg-emerald-600/20 hover:bg-emerald-600/35 border border-emerald-500/40 text-emerald-300' : 'bg-[#1d2420] border border-[#2c3630] text-gray-500 cursor-not-allowed'} text-xs font-bold transition"
+                            >
+                                <span>✅ Pagou (Subir)</span>
+                            </button>
+                            <button onclick="removeSubSlot('${sub.id}')" title="Limpar/Remover suplente" class="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-950/30 transition">
+                                <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', html);
+            });
+
+            lucide.createIcons({ root: container });
+        }
+
+        // ==========================================
+        // WHATSAPP EXPORT & IMPORT PARSER
+        // ==========================================
+        function copyWhatsAppList() {
+            const ev = appState.event;
+            const paidPlayers = appState.players.filter(p => p.paid);
+            const unpaidPlayers = appState.players.filter(p => !p.paid);
+
+            let text = `🚨 GALERA, DATA CONFIRMADA! 🚨\n\n`;
+            text += `📅 Data: ${ev.date}\n`;
+            text += `📍 Local: ${ev.local}\n\n`;
+            text += `💰 VALOR: ${ev.price}\n`;
+            text += `💼 Plano extra: ${ev.extra}\n\n`;
+            text += `➕ Recarga: ${ev.reload}\n\n`;
+            text += `⚠️ IMPORTANTE: É necessário ${ev.deposit} reais, de cada um que estiver o nome na lista para garantir a data\n\n`;
+            text += `Chave pix: ${ev.pix}\n\n`;
+            text += `Conto com todos! 🔥🔫\n\n`;
+
+            text += `✅ PAGANTES (${paidPlayers.length}):\n\n`;
+            let counter = 1;
+            paidPlayers.forEach(p => {
+                text += `${counter}- ${p.name} ✅\n`;
+                counter++;
+            });
+
+            text += `\n❌ NÃO PAGARAM (${unpaidPlayers.length}):\n\n`;
+            unpaidPlayers.forEach(p => {
+                text += `${counter}- ${p.name}\n`;
+                counter++;
+            });
+
+            while (counter <= MAX_MAIN_SLOTS) {
+                text += `${counter}-\n`;
+                counter++;
+            }
+
+            text += `Suplente se pagar a entrada já entra em um lugar de quem ainda não pagou, entra no lugar sempre quem está no último da lista a cima não pagante\n`;
+            appState.subs.forEach((s, idx) => {
+                text += `${idx + 1}. ${s.name ? s.name : ''}\n`;
+            });
+
+            copyTextToClipboard(text.trim(), 'Lista formatada copiada! Agora é só colar no WhatsApp.');
+        }
+
+        function openImportModal() {
+            document.getElementById('import-textarea').value = '';
+            document.getElementById('modal-import').classList.remove('hidden');
+        }
+
+        function processWhatsAppImport() {
+            const raw = document.getElementById('import-textarea').value;
+            if (!raw.trim()) {
+                showToast('Cole o texto da lista primeiro.', 'warning');
+                return;
+            }
+
+            const lines = raw.split('\n').map(l => l.trim());
+            const parsedPlayers = [];
+            const parsedSubs = [];
+            let inSubsSection = false;
+
+            for (const line of lines) {
+                if (!line) continue;
+
+                if (/suplente/i.test(line)) {
+                    inSubsSection = true;
+                    continue;
+                }
+
+                // Match numbered lines like "1- Alex ✅", "28- Alan", "1. João"
+                const mainMatch = line.match(/^(\d+)\s*[-–.)]\s*(.*)$/);
+                if (mainMatch) {
+                    const num = parseInt(mainMatch[1], 10);
+                    let content = mainMatch[2].trim();
+
+                    if (inSubsSection) {
+                        const cleanSub = content.replace(/✅/g, '').trim();
+                        parsedSubs.push({ id: uid(), name: cleanSub });
+                    } else if (num >= 1 && num <= 50) {
+                        if (content.length > 0) {
+                            const hasCheck = content.includes('✅');
+                            // Remove checkmarks while preserving parentheses like "Aleydson ✅ (Jean)" -> "Aleydson (Jean)"
+                            const cleanName = content.replace(/✅/g, '').replace(/\s+/g, ' ').trim();
+                            if (cleanName) {
+                                parsedPlayers.push({
+                                    id: uid(),
+                                    name: cleanName,
+                                    paid: hasCheck
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (parsedPlayers.length === 0) {
+                showToast('Não foi possível identificar jogadores numerados (ex: 1- Nome) no texto.', 'error');
+                return;
+            }
+
+            appState.players = parsedPlayers.slice(0, MAX_MAIN_SLOTS);
+            normalizeRosterOrder();
+
+            if (parsedSubs.length > 0) {
+                appState.subs = parsedSubs;
+            } else {
+                appState.subs = [
+                    { id: uid(), name: '' },
+                    { id: uid(), name: '' },
+                    { id: uid(), name: '' },
+                    { id: uid(), name: '' }
+                ];
+            }
+
+            saveState();
+            renderAll();
+            closeModal('modal-import');
+            showToast(`Lista importada com sucesso! (${appState.players.filter(p => p.paid).length} pagantes identificados)`);
+        }
+
+        // ==========================================
+        // TEAM DRAW LOGIC (SORTEIO COM 2 LÍDERES)
+        // ==========================================
+        function initDrawTab() {
+            // Se ainda não há seleção feita, seleciona automaticamente todos os pagantes
+            if (selectedForDraw.size === 0) {
+                appState.players.filter(p => p.paid).forEach(p => selectedForDraw.add(p.id));
+            } else {
+                // Remove IDs que não existem mais
+                const validIds = new Set(appState.players.map(p => p.id));
+                for (const id of Array.from(selectedForDraw)) {
+                    if (!validIds.has(id)) selectedForDraw.delete(id);
+                }
+            }
+            renderDrawPoolAndLeaders();
+        }
+
+        function selectPoolPreset(preset) {
+            selectedForDraw.clear();
+            if (preset === 'paid') {
+                appState.players.filter(p => p.paid).forEach(p => selectedForDraw.add(p.id));
+            } else {
+                appState.players.forEach(p => selectedForDraw.add(p.id));
+            }
+            renderDrawPoolAndLeaders();
+        }
+
+        function toggleDrawParticipant(playerId) {
+            if (selectedForDraw.has(playerId)) {
+                selectedForDraw.delete(playerId);
+            } else {
+                selectedForDraw.add(playerId);
+            }
+            renderDrawPoolAndLeaders();
+        }
+
+        function renderDrawPoolAndLeaders() {
+            const poolContainer = document.getElementById('draw-pool-container');
+            const leader1Sel = document.getElementById('leader1-select');
+            const leader2Sel = document.getElementById('leader2-select');
+
+            const prevL1 = leader1Sel.value;
+            const prevL2 = leader2Sel.value;
+
+            document.getElementById('draw-selected-count').textContent = selectedForDraw.size;
+
+            // Render checkboxes
+            poolContainer.innerHTML = '';
+            appState.players.forEach((p, index) => {
+                const isChecked = selectedForDraw.has(p.id);
+                const badge = p.paid ? '✅' : '❌';
+                poolContainer.insertAdjacentHTML('beforeend', `
+                    <label class="flex items-center gap-2.5 p-2.5 rounded-xl border cursor-pointer transition select-none ${isChecked ? 'bg-[#1f2922] border-[#688f5b]/60 text-white' : 'bg-[#0f1311] border-[#232b26] text-gray-500'}">
+                        <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleDrawParticipant('${p.id}')" class="w-4 h-4 accent-orange-500 rounded cursor-pointer">
+                        <span class="text-xs font-mono text-gray-400">${index + 1}.</span>
+                        <span class="text-xs sm:text-sm font-medium truncate flex-1">${escapeHtml(p.name)}</span>
+                        <span class="text-xs">${badge}</span>
+                    </label>
+                `);
+            });
+
+            // Populate Leader Dropdowns with currently selected participants
+            const activePlayers = appState.players.filter(p => selectedForDraw.has(p.id));
+
+            const buildOptions = (selectedVal, blockedVal) => {
+                let opts = `<option value="">-- Sem líder fixo (aleatório) --</option>`;
+                activePlayers.forEach(p => {
+                    const disabled = p.id === blockedVal ? 'disabled' : '';
+                    const suffix = p.id === blockedVal ? ' (Já é líder do outro time)' : '';
+                    const selected = p.id === selectedVal && p.id !== blockedVal ? 'selected' : '';
+                    opts += `<option value="${p.id}" ${selected} ${disabled}>${escapeHtml(p.name)}${suffix}</option>`;
+                });
+                return opts;
+            };
+
+            const validPrevL1 = activePlayers.some(p => p.id === prevL1) ? prevL1 : '';
+            const validPrevL2 = activePlayers.some(p => p.id === prevL2) ? prevL2 : '';
+
+            leader1Sel.innerHTML = buildOptions(validPrevL1, validPrevL2);
+            leader2Sel.innerHTML = buildOptions(validPrevL2, validPrevL1);
+        }
+
+        function handleLeaderChange(changedTeam) {
+            const l1 = document.getElementById('leader1-select').value;
+            const l2 = document.getElementById('leader2-select').value;
+
+            if (l1 && l1 === l2) {
+                if (changedTeam === 1) document.getElementById('leader2-select').value = '';
+                else document.getElementById('leader1-select').value = '';
+                showToast('Os dois líderes não podem ser a mesma pessoa!', 'warning');
+            }
+            renderDrawPoolAndLeaders();
+        }
+
+        function fisherYatesShuffle(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function runTeamDraw() {
+            const participants = appState.players.filter(p => selectedForDraw.has(p.id));
+
+            if (participants.length < 2) {
+                showToast('Selecione pelo menos 2 jogadores para realizar o sorteio!', 'error');
+                return;
+            }
+
+            const leader1Id = document.getElementById('leader1-select').value;
+            const leader2Id = document.getElementById('leader2-select').value;
+
+            if (leader1Id && leader1Id === leader2Id) {
+                showToast('Escolha líderes diferentes para cada equipe!', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('btn-draw-teams');
+            const resultsArea = document.getElementById('draw-results-area');
+            const teamsGrid = document.getElementById('teams-grid');
+
+            btn.disabled = true;
+            btn.classList.add('opacity-80');
+            teamsGrid.classList.add('shuffling');
+
+            setTimeout(() => {
+                const team1 = [];
+                const team2 = [];
+
+                const leader1 = participants.find(p => p.id === leader1Id);
+                const leader2 = participants.find(p => p.id === leader2Id);
+
+                if (leader1) team1.push(leader1);
+                if (leader2) team2.push(leader2);
+
+                // Remaining players excluding fixed leaders
+                const remaining = participants.filter(p => p.id !== leader1Id && p.id !== leader2Id);
+                const shuffled = fisherYatesShuffle(remaining);
+
+                // Distribute balancing team sizes
+                shuffled.forEach(player => {
+                    if (team1.length < team2.length) {
+                        team1.push(player);
+                    } else if (team2.length < team1.length) {
+                        team2.push(player);
+                    } else {
+                        // Equal size: random coin flip for next slot
+                        if (Math.random() < 0.5) team1.push(player);
+                        else team2.push(player);
+                    }
+                });
+
+                lastDrawResult = { team1, team2, leader1Id, leader2Id };
+                renderDrawResults();
+
+                resultsArea.classList.remove('hidden');
+                teamsGrid.classList.remove('shuffling');
+                btn.disabled = false;
+                btn.classList.remove('opacity-80');
+
+                resultsArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                showToast('Equipes sorteadas com sucesso!');
+            }, 350);
+        }
+
+        function renderDrawResults() {
+            const t1Name = document.getElementById('team1-name').value.trim() || 'EQUIPE 1';
+            const t2Name = document.getElementById('team2-name').value.trim() || 'EQUIPE 2';
+
+            document.getElementById('result-team1-title').textContent = t1Name;
+            document.getElementById('result-team2-title').textContent = t2Name;
+            document.getElementById('result-team1-count').textContent = `${lastDrawResult.team1.length} jogadores`;
+            document.getElementById('result-team2-count').textContent = `${lastDrawResult.team2.length} jogadores`;
+
+            const renderList = (list, leaderId, accentColor) => {
+                return list.map((p, idx) => {
+                    const isLeader = p.id === leaderId;
+                    return `
+                        <li class="px-3 py-2.5 flex items-center justify-between gap-2 ${isLeader ? 'bg-amber-500/10 rounded-lg' : ''}">
+                            <div class="flex items-center gap-2.5">
+                                <span class="w-6 h-6 rounded-md bg-[#1d2420] text-xs font-mono font-bold text-gray-400 flex items-center justify-center">
+                                    ${idx + 1}
+                                </span>
+                                <span class="text-sm font-semibold ${isLeader ? 'text-amber-300' : 'text-white'}">
+                                    ${escapeHtml(p.name)}
+                                </span>
+                            </div>
+                            ${isLeader ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[11px] font-bold uppercase">👑 Líder</span>` : ''}
+                        </li>
+                    `;
+                }).join('');
+            };
+
+            document.getElementById('result-team1-list').innerHTML = renderList(lastDrawResult.team1, lastDrawResult.leader1Id);
+            document.getElementById('result-team2-list').innerHTML = renderList(lastDrawResult.team2, lastDrawResult.leader2Id);
+        }
+
+        function copyTeamsWhatsApp() {
+            if (lastDrawResult.team1.length === 0 && lastDrawResult.team2.length === 0) return;
+
+            const t1Name = document.getElementById('team1-name').value.trim() || 'EQUIPE 1';
+            const t2Name = document.getElementById('team2-name').value.trim() || 'EQUIPE 2';
+
+            let text = `⚔️ *DIVISÃO DE EQUIPES - ${appState.event.local.toUpperCase()}* ⚔️\n\n`;
+
+            text += `🟧 *${t1Name}* (${lastDrawResult.team1.length}):\n`;
+            lastDrawResult.team1.forEach((p, i) => {
+                const crown = p.id === lastDrawResult.leader1Id ? ' 👑 (Líder)' : '';
+                text += `${i + 1}- ${p.name}${crown}\n`;
+            });
+
+            text += `\n🟩 *${t2Name}* (${lastDrawResult.team2.length}):\n`;
+            lastDrawResult.team2.forEach((p, i) => {
+                const crown = p.id === lastDrawResult.leader2Id ? ' 👑 (Líder)' : '';
+                text += `${i + 1}- ${p.name}${crown}\n`;
+            });
+
+            text += `\nBom jogo a todos! 🎯🔫`;
+
+            copyTextToClipboard(text, 'Escalação das equipes copiada para o WhatsApp!');
+        }
+
+        // ==========================================
+        // UTILITIES & MODALS
+        // ==========================================
+        function copyTextToClipboard(text, successMsg) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showToast(successMsg);
+            } catch (err) {
+                showToast('Não foi possível copiar automaticamente.', 'error');
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function openResetModal() {
+            document.getElementById('modal-reset').classList.remove('hidden');
+        }
+
+        function confirmResetData() {
+            appState = JSON.parse(JSON.stringify(DEFAULT_STATE));
+            selectedForDraw.clear();
+            saveState();
+            renderAll();
+            closeModal('modal-reset');
+            document.getElementById('draw-results-area').classList.add('hidden');
+            showToast('Dados restaurados para a lista original!', 'info');
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function renderAll() {
+            renderEventInfo();
+            updateStats();
+            renderMainList();
+            renderSubsList();
+            if (!document.getElementById('tab-sorteio').classList.contains('hidden')) {
+                initDrawTab();
+            }
+        }
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', () => {
+            normalizeRosterOrder();
+            renderAll();
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>
