@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Airsoft Ops | Controle de Lista & Sorteio Tático</title>
+    <title>Divisão Airsoft | Controle de Lista & Sorteio Tático</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts: Inter & Chakra Petch (Tactical feel) -->
@@ -11,7 +11,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -85,29 +84,29 @@
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2.5">
                         <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-[#4d6b43] to-[#2c3e26] border border-[#688f5b]/40 flex items-center justify-center shadow-lg">
-                            <i data-lucide="crosshair" class="w-6 h-6 text-orange-500"></i>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 text-orange-500" aria-hidden="true"><circle cx="12" cy="12" r="10" />   <line x1="22" x2="18" y1="12" y2="12" />   <line x1="6" x2="2" y1="12" y2="12" />   <line x1="12" x2="12" y1="6" y2="2" />   <line x1="12" x2="12" y1="22" y2="18" /></svg>
                         </div>
                         <div>
                             <h1 class="font-tactical text-xl font-bold tracking-wider text-white uppercase leading-none">
-                                AIRSOFT <span class="text-orange-500">OPS</span>
+                                DIVISÃO <span class="text-orange-500">AIRSOFT</span>
                             </h1>
                             <p class="text-xs text-gray-400 mt-0.5">Gestão de Pelotão & Sorteio</p>
                         </div>
                     </div>
 
                     <button id="btn-auth" onclick="handleAuthButton()" class="ml-auto mr-2 inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#1d2420] border border-[#2c3630] text-xs font-semibold text-gray-300 hover:text-white">
-                        <i data-lucide="log-in" class="w-4 h-4"></i><span id="btn-auth-label">Admin</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />   <polyline points="10 17 15 12 10 7" />   <line x1="15" x2="3" y1="12" y2="12" /></svg><span id="btn-auth-label">Admin</span>
                     </button>
                 </div>
 
                 <!-- Navigation Tabs -->
                 <nav class="grid grid-cols-2 sm:flex bg-[#151a17] p-1 rounded-xl border border-[#2c3630]">
                     <button id="tab-btn-lista" onclick="switchTab('lista')" class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all bg-[#4d6b43] text-white shadow">
-                        <i data-lucide="clipboard-check" class="w-4 h-4"></i>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1" />   <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />   <path d="m9 14 2 2 4-4" /></svg>
                         <span>Lista & Pagamentos</span>
                     </button>
                     <button id="tab-btn-sorteio" onclick="switchTab('sorteio')" class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all text-gray-400 hover:text-white">
-                        <i data-lucide="swords" class="w-4 h-4"></i>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4" aria-hidden="true"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5" />   <line x1="13" x2="19" y1="19" y2="13" />   <line x1="16" x2="20" y1="16" y2="20" />   <line x1="19" x2="21" y1="21" y2="19" />   <polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5" />   <line x1="5" x2="9" y1="14" y2="18" />   <line x1="7" x2="4" y1="17" y2="20" />   <line x1="3" x2="5" y1="19" y2="21" /></svg>
                         <span>Sorteio de Equipes</span>
                     </button>
                 </nav>
@@ -140,7 +139,7 @@
 
                     <div class="flex items-center gap-2">
                         <button onclick="openEditEventModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1d2420] hover:bg-[#26302a] border border-[#2c3630] text-xs font-medium text-gray-300 transition">
-                            <i data-lucide="edit-3" class="w-3.5 h-3.5 text-orange-400"></i>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5 text-orange-400" aria-hidden="true"><path d="M12 20h9" />   <path d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z" /></svg>
                             Editar Info
                         </button>
                         
@@ -150,7 +149,7 @@
                 <!-- Event Details Grid -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-4 text-sm">
                     <div class="bg-[#1d2420]/70 p-3 rounded-xl border border-[#2c3630]/80 flex items-start gap-3">
-                        <i data-lucide="calendar-clock" class="w-5 h-5 text-orange-500 shrink-0 mt-0.5"></i>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-orange-500 shrink-0 mt-0.5" aria-hidden="true"><path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5" />   <path d="M16 2v4" />   <path d="M8 2v4" />   <path d="M3 10h5" />   <path d="M17.5 17.5 16 16.3V14" />   <circle cx="16" cy="16" r="6" /></svg>
                         <div>
                             <p class="text-xs text-gray-400">Data e Horário</p>
                             <p id="display-event-date" class="font-semibold text-white">29/11 das 13:30 às 16:00h</p>
@@ -158,7 +157,7 @@
                     </div>
 
                     <div class="bg-[#1d2420]/70 p-3 rounded-xl border border-[#2c3630]/80 flex items-start gap-3">
-                        <i data-lucide="banknote" class="w-5 h-5 text-emerald-400 shrink-0 mt-0.5"></i>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" aria-hidden="true"><rect width="20" height="12" x="2" y="6" rx="2" />   <circle cx="12" cy="12" r="2" />   <path d="M6 12h.01M18 12h.01" /></svg>
                         <div>
                             <p class="text-xs text-gray-400">Valor do Jogo</p>
                             <p id="display-event-price" class="font-semibold text-white">R$ 100,00 <span class="text-xs font-normal text-gray-400">(320 BBs inclusas)</span></p>
@@ -166,7 +165,7 @@
                     </div>
 
                     <div class="bg-[#1d2420]/70 p-3 rounded-xl border border-[#2c3630]/80 flex items-start gap-3">
-                        <i data-lucide="shield-alert" class="w-5 h-5 text-amber-400 shrink-0 mt-0.5"></i>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-amber-400 shrink-0 mt-0.5" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />   <path d="M12 8v4" />   <path d="M12 16h.01" /></svg>
                         <div>
                             <p class="text-xs text-gray-400">Sinal / Entrada Obrigatória</p>
                             <p id="display-event-deposit" class="font-semibold text-amber-300">R$ 20,00 para garantir vaga</p>
@@ -174,7 +173,7 @@
                     </div>
 
                     <div class="bg-[#1d2420]/70 p-3 rounded-xl border border-[#2c3630]/80 flex items-start gap-3">
-                        <i data-lucide="package-plus" class="w-5 h-5 text-[#688f5b] shrink-0 mt-0.5"></i>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-[#688f5b] shrink-0 mt-0.5" aria-hidden="true"><path d="M16 16h6" />   <path d="M19 13v6" />   <path d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14" />   <path d="m7.5 4.27 9 5.15" />   <polyline points="3.29 7 12 12 20.71 7" />   <line x1="12" x2="12" y1="22" y2="12" /></svg>
                         <div>
                             <p class="text-xs text-gray-400">Plano Extra BBs</p>
                             <p id="display-event-extra" class="font-medium text-gray-200">5 mil BBs por R$ 70,00 (dividido)</p>
@@ -182,7 +181,7 @@
                     </div>
 
                     <div class="bg-[#1d2420]/70 p-3 rounded-xl border border-[#2c3630]/80 flex items-start gap-3">
-                        <i data-lucide="refresh-cw" class="w-5 h-5 text-[#688f5b] shrink-0 mt-0.5"></i>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-[#688f5b] shrink-0 mt-0.5" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />   <path d="M21 3v5h-5" />   <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />   <path d="M8 16H3v5" /></svg>
                         <div>
                             <p class="text-xs text-gray-400">Recarga em Campo</p>
                             <p id="display-event-reload" class="font-medium text-gray-200">R$ 20,00 por +320 munições</p>
@@ -196,7 +195,7 @@
                             <p id="display-event-pix" class="text-xs sm:text-sm font-mono text-white truncate select-all">ramondeoliveiracorrea@gmail.com</p>
                         </div>
                         <button onclick="copyPix()" class="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#4d6b43] hover:bg-[#5c8050] active:scale-95 text-white text-xs font-semibold transition shadow">
-                            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" />   <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>
                             <span>Copiar</span>
                         </button>
                     </div>
@@ -208,7 +207,7 @@
                 <div class="bg-[#151a17] border border-[#2c3630] rounded-xl p-4">
                     <div class="flex items-center justify-between text-gray-400 mb-1">
                         <span class="text-xs font-medium uppercase">Total de Vagas</span>
-                        <i data-lucide="users" class="w-4 h-4 text-gray-400"></i>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-gray-400" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />   <circle cx="9" cy="7" r="4" />   <path d="M22 21v-2a4 4 0 0 0-3-3.87" />   <path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
                     </div>
                     <div class="flex items-baseline gap-2">
                         <span id="stat-occupied" class="font-tactical text-2xl font-bold text-white">38</span>
@@ -218,8 +217,8 @@
 
                 <div class="bg-[#151a17] border border-emerald-900/50 rounded-xl p-4">
                     <div class="flex items-center justify-between text-emerald-400 mb-1">
-                        <span class="text-xs font-medium uppercase">Pagantes (✅)</span>
-                        <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                        <span class="text-xs font-medium uppercase">Pagantes</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4" aria-hidden="true"><circle cx="12" cy="12" r="10" />   <path d="m9 12 2 2 4-4" /></svg>
                     </div>
                     <div class="flex items-baseline gap-2">
                         <span id="stat-paid" class="font-tactical text-2xl font-bold text-emerald-400">27</span>
@@ -229,8 +228,8 @@
 
                 <div class="bg-[#151a17] border border-red-900/40 rounded-xl p-4">
                     <div class="flex items-center justify-between text-red-400 mb-1">
-                        <span class="text-xs font-medium uppercase">Pendentes (❌)</span>
-                        <i data-lucide="clock" class="w-4 h-4"></i>
+                        <span class="text-xs font-medium uppercase">Pendentes</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4" aria-hidden="true"><circle cx="12" cy="12" r="10" />   <polyline points="12 6 12 12 16 14" /></svg>
                     </div>
                     <div class="flex items-baseline gap-2">
                         <span id="stat-unpaid" class="font-tactical text-2xl font-bold text-red-400">11</span>
@@ -241,7 +240,7 @@
                 <div class="bg-[#151a17] border border-orange-900/40 rounded-xl p-4">
                     <div class="flex items-center justify-between text-orange-400 mb-1">
                         <span class="text-xs font-medium uppercase">Sinais Recebidos</span>
-                        <i data-lucide="wallet" class="w-4 h-4"></i>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4" aria-hidden="true"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" />   <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" /></svg>
                     </div>
                     <div class="flex items-baseline gap-1">
                         <span id="stat-money" class="font-tactical text-2xl font-bold text-orange-400">R$ 540</span>
@@ -254,19 +253,19 @@
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-[#151a17] p-3.5 rounded-xl border border-[#2c3630]">
                 <div class="flex flex-wrap items-center gap-2">
                     <button onclick="openImportModal()" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#1d2420] hover:bg-[#28322c] border border-[#3a473f] text-sm font-semibold text-gray-200 transition">
-                        <i data-lucide="file-down" class="w-4 h-4 text-orange-400"></i>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-orange-400" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />   <path d="M14 2v4a2 2 0 0 0 2 2h4" />   <path d="M12 18v-6" />   <path d="m9 15 3 3 3-3" /></svg>
                         <span>Colar / Importar Lista</span>
                     </button>
 
                     <button onclick="copyWhatsAppList()" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-sm font-bold text-white shadow-lg shadow-orange-950/40 transition active:scale-[0.98]">
-                        <i data-lucide="share-2" class="w-4 h-4"></i>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4" aria-hidden="true"><circle cx="18" cy="5" r="3" />   <circle cx="6" cy="12" r="3" />   <circle cx="18" cy="19" r="3" />   <line x1="8.59" x2="15.42" y1="13.51" y2="17.49" />   <line x1="15.41" x2="8.59" y1="6.51" y2="10.49" /></svg>
                         <span>Copiar Lista p/ WhatsApp</span>
                     </button>
                 </div>
 
                 <!-- Search filter -->
                 <div class="relative">
-                    <i data-lucide="search" class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" aria-hidden="true"><circle cx="11" cy="11" r="8" />   <path d="m21 21-4.3-4.3" /></svg>
                     <input type="text" id="search-player" oninput="renderMainList()" placeholder="Buscar operador..." class="w-full sm:w-56 pl-9 pr-3 py-2 bg-[#0d100e] border border-[#2c3630] focus:border-orange-500 rounded-xl text-sm text-white placeholder-gray-500 outline-none">
                 </div>
             </div>
@@ -276,12 +275,12 @@
                 <input type="text" id="new-player-name" placeholder="Nome do novo jogador (ex: Lucas (Felipe))" required class="flex-1 px-3.5 py-2.5 bg-[#0d100e] border border-[#2c3630] focus:border-[#688f5b] rounded-xl text-sm text-white placeholder-gray-500 outline-none">
                 <div class="flex gap-2">
                     <select id="new-player-target" class="px-3 py-2.5 bg-[#0d100e] border border-[#2c3630] rounded-xl text-sm text-gray-200 outline-none">
-                        <option value="main-unpaid">Lista Principal (Pendente ❌)</option>
-                        <option value="main-paid">Lista Principal (Já Pagou ✅)</option>
+                        <option value="main-unpaid">Lista Principal (Pendente)</option>
+                        <option value="main-paid">Lista Principal (Já Pagou)</option>
                         <option value="sub">Lista de Suplentes</option>
                     </select>
                     <button type="submit" class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#4d6b43] hover:bg-[#5c8050] text-sm font-semibold text-white transition shrink-0">
-                        <i data-lucide="user-plus" class="w-4 h-4"></i>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />   <circle cx="9" cy="7" r="4" />   <line x1="19" x2="19" y1="8" y2="14" />   <line x1="22" x2="16" y1="11" y2="11" /></svg>
                         <span>Adicionar</span>
                     </button>
                 </div>
@@ -291,7 +290,7 @@
             <div class="bg-[#151a17] border border-[#2c3630] rounded-2xl overflow-hidden shadow-xl">
                 <div class="px-4 py-3.5 bg-[#1a211d] border-b border-[#2c3630] flex flex-wrap items-center justify-between gap-2">
                     <div class="flex items-center gap-2">
-                        <i data-lucide="list-ordered" class="w-5 h-5 text-orange-500"></i>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-orange-500" aria-hidden="true"><path d="M10 12h11" />   <path d="M10 18h11" />   <path d="M10 6h11" />   <path d="M4 10h2" />   <path d="M4 6h1v4" />   <path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1" /></svg>
                         <h3 class="font-tactical text-lg font-bold text-white uppercase tracking-wide">
                             Lista Oficial (40 Vagas)
                         </h3>
@@ -311,17 +310,17 @@
                 <div class="px-4 py-3.5 bg-[#1a211d] border-b border-[#2c3630] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
                         <div class="flex items-center gap-2">
-                            <i data-lucide="user-check" class="w-5 h-5 text-amber-400"></i>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-amber-400" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />   <circle cx="9" cy="7" r="4" />   <polyline points="16 11 18 13 22 9" /></svg>
                             <h3 class="font-tactical text-lg font-bold text-white uppercase tracking-wide">
                                 Lista de Suplentes
                             </h3>
                         </div>
                         <p class="text-xs text-gray-400 mt-0.5">
-                            Regra: Se o suplente pagar (✅), assume automaticamente a vaga do <strong class="text-amber-300">último não-pagante</strong> da lista acima!
+                            Regra: Se o suplente pagar, assume automaticamente a vaga do <strong class="text-amber-300">último não-pagante</strong> da lista acima!
                         </p>
                     </div>
                     <button onclick="addEmptySubSlot()" class="self-start sm:self-center inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1d2420] hover:bg-[#28322c] border border-[#3a473f] text-xs font-semibold text-gray-200 transition">
-                        <i data-lucide="plus" class="w-3.5 h-3.5 text-amber-400"></i>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5 text-amber-400" aria-hidden="true"><path d="M5 12h14" />   <path d="M12 5v14" /></svg>
                         Vaga Suplente
                     </button>
                 </div>
@@ -343,7 +342,7 @@
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-[#2c3630]">
                     <div>
                         <h2 class="font-tactical text-xl sm:text-2xl font-bold text-white uppercase flex items-center gap-2">
-                            <i data-lucide="shield" class="w-6 h-6 text-orange-500"></i>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 text-orange-500" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /></svg>
                             Divisão Tática de Equipes
                         </h2>
                         <p class="text-xs sm:text-sm text-gray-400 mt-1">
@@ -365,7 +364,7 @@
                                 <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
                                 Esquadrão 1
                             </span>
-                            <i data-lucide="crown" class="w-4 h-4 text-orange-400"></i>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-orange-400" aria-hidden="true"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z" />   <path d="M5 21h14" /></svg>
                         </div>
                         <div>
                             <label class="block text-xs text-gray-400 mb-1">Nome da Equipe 1</label>
@@ -386,7 +385,7 @@
                                 <span class="w-2.5 h-2.5 rounded-full bg-[#688f5b]"></span>
                                 Esquadrão 2
                             </span>
-                            <i data-lucide="crown" class="w-4 h-4 text-[#8ab87a]"></i>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-[#8ab87a]" aria-hidden="true"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z" />   <path d="M5 21h14" /></svg>
                         </div>
                         <div>
                             <label class="block text-xs text-gray-400 mb-1">Nome da Equipe 2</label>
@@ -404,7 +403,7 @@
                 <!-- Action Draw Button -->
                 <div class="mt-6 flex flex-col sm:flex-row gap-3">
                     <button id="btn-draw-teams" onclick="runTeamDraw()" class="flex-1 py-3.5 px-6 rounded-xl bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 hover:from-orange-500 hover:to-amber-400 text-white font-tactical text-lg font-bold uppercase tracking-wider shadow-lg shadow-orange-950/50 flex items-center justify-center gap-2.5 transition active:scale-[0.99]">
-                        <i data-lucide="shuffle" class="w-5 h-5"></i>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5" aria-hidden="true"><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22" />   <path d="m18 2 4 4-4 4" />   <path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2" />   <path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8" />   <path d="m18 14 4 4-4 4" /></svg>
                         <span>Sortear Equipes Agora</span>
                     </button>
                 </div>
@@ -414,11 +413,11 @@
             <div id="draw-results-area" class="hidden space-y-4">
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <h3 class="font-tactical text-lg font-bold text-white uppercase flex items-center gap-2">
-                        <i data-lucide="check-square" class="w-5 h-5 text-emerald-400"></i>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-emerald-400" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2" />   <path d="m9 12 2 2 4-4" /></svg>
                         Resultado do Sorteio
                     </h3>
                     <button onclick="copyTeamsWhatsApp()" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#4d6b43] hover:bg-[#5c8050] text-white text-sm font-semibold shadow transition">
-                        <i data-lucide="copy" class="w-4 h-4"></i>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" />   <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>
                         <span>Copiar Times p/ WhatsApp</span>
                     </button>
                 </div>
@@ -451,11 +450,11 @@
                         <h3 class="font-tactical text-base font-bold text-white uppercase">
                             Jogadores no Sorteio
                         </h3>
-                        <p class="text-xs text-gray-400">Por padrão apenas pagantes (✅) entram, mas você pode marcar/desmarcar quem quiser.</p>
+                        <p class="text-xs text-gray-400">Por padrão apenas pagantes entram, mas você pode marcar/desmarcar quem quiser.</p>
                     </div>
                     <div class="flex items-center gap-2">
                         <button onclick="selectPoolPreset('paid')" class="px-3 py-1.5 rounded-lg bg-[#4d6b43]/30 hover:bg-[#4d6b43]/50 border border-[#688f5b]/40 text-xs font-semibold text-[#a3d194] transition">
-                            Só Pagantes (✅)
+                            Só Pagantes
                         </button>
                         <button onclick="selectPoolPreset('all')" class="px-3 py-1.5 rounded-lg bg-[#1d2420] hover:bg-[#28322c] border border-[#2c3630] text-xs font-semibold text-gray-300 transition">
                             Todos da Lista
@@ -481,15 +480,15 @@
         <div class="bg-[#151a17] border border-[#2c3630] rounded-2xl max-w-xl w-full p-5 shadow-2xl space-y-4">
             <div class="flex items-center justify-between border-b border-[#2c3630] pb-3">
                 <h3 class="font-tactical text-lg font-bold text-white uppercase flex items-center gap-2">
-                    <i data-lucide="file-text" class="w-5 h-5 text-orange-500"></i>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-orange-500" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />   <path d="M14 2v4a2 2 0 0 0 2 2h4" />   <path d="M10 9H8" />   <path d="M16 13H8" />   <path d="M16 17H8" /></svg>
                     Importar Lista do WhatsApp
                 </h3>
                 <button onclick="closeModal('modal-import')" class="text-gray-400 hover:text-white p-1">
-                    <i data-lucide="x" class="w-5 h-5"></i>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5" aria-hidden="true"><path d="M18 6 6 18" />   <path d="m6 6 12 12" /></svg>
                 </button>
             </div>
             <p class="text-xs text-gray-300 leading-relaxed">
-                Cole abaixo o texto completo da lista do mês que você usa no grupo do WhatsApp. O sistema identifica automaticamente quem tem <strong class="text-emerald-400">✅</strong> (pagante), quem não tem (pendente) e os suplentes.
+                Cole abaixo o texto completo da lista do mês que você usa no grupo do WhatsApp. O sistema identifica automaticamente quem tem <strong class="text-emerald-400">o check de pago</strong> (pagante), quem não tem (pendente) e os suplentes.
             </p>
             <textarea id="import-textarea" rows="10" placeholder="Cole aqui a mensagem do WhatsApp com a lista..." class="w-full p-3 bg-[#0d100e] border border-[#2c3630] focus:border-orange-500 rounded-xl text-xs font-mono text-gray-200 outline-none"></textarea>
             <div class="flex justify-end gap-2 pt-2">
@@ -509,7 +508,7 @@
             <div class="flex items-center justify-between border-b border-[#2c3630] pb-3">
                 <h3 class="font-tactical text-lg font-bold text-white uppercase">Editar Informações do Jogo</h3>
                 <button onclick="closeModal('modal-edit-event')" class="text-gray-400 hover:text-white p-1">
-                    <i data-lucide="x" class="w-5 h-5"></i>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5" aria-hidden="true"><path d="M18 6 6 18" />   <path d="m6 6 12 12" /></svg>
                 </button>
             </div>
             <div class="space-y-3 text-sm">
@@ -725,10 +724,9 @@
             const ae = document.activeElement;
             if (ae && ae.tagName === 'INPUT' && ae.type === 'text') { window.__pendingRender = true; return; }
             renderAll();
-            lucide.createIcons();
         };
         document.addEventListener('focusout', () => {
-            if (window.__pendingRender) { window.__pendingRender = false; setTimeout(() => { renderAll(); lucide.createIcons(); }, 100); }
+            if (window.__pendingRender) { window.__pendingRender = false; setTimeout(() => { renderAll(); }, 100); }
         });
 
         // ==========================================
@@ -788,20 +786,19 @@
             };
 
             const icons = {
-                success: 'check-circle-2',
-                info: 'info',
-                warning: 'arrow-left-right',
-                error: 'alert-circle'
+                success: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 shrink-0 mt-0.5" aria-hidden="true"><circle cx="12" cy="12" r="10" />   <path d="m9 12 2 2 4-4" /></svg>`,
+                info: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 shrink-0 mt-0.5" aria-hidden="true"><circle cx="12" cy="12" r="10" />   <path d="M12 16v-4" />   <path d="M12 8h.01" /></svg>`,
+                warning: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 shrink-0 mt-0.5" aria-hidden="true"><path d="M8 3 4 7l4 4" />   <path d="M4 7h16" />   <path d="m16 21 4-4-4-4" />   <path d="M20 17H4" /></svg>`,
+                error: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 shrink-0 mt-0.5" aria-hidden="true"><circle cx="12" cy="12" r="10" />   <line x1="12" x2="12" y1="8" y2="12" />   <line x1="12" x2="12.01" y1="16" y2="16" /></svg>`
             };
 
             toast.className = `pointer-events-auto flex items-start gap-2.5 p-3.5 rounded-xl border shadow-2xl backdrop-blur-md transition-all duration-300 transform translate-y-2 opacity-0 ${styles[type] || styles.success}`;
             toast.innerHTML = `
-                <i data-lucide="${icons[type] || 'info'}" class="w-5 h-5 shrink-0 mt-0.5"></i>
+                ${icons[type] || icons.info}
                 <p class="text-xs sm:text-sm font-medium leading-snug">${message}</p>
             `;
 
             container.appendChild(toast);
-            lucide.createIcons({ root: toast });
 
             requestAnimationFrame(() => {
                 toast.classList.remove('translate-y-2', 'opacity-0');
@@ -918,9 +915,9 @@
             renderAll();
 
             if (player.paid) {
-                showToast(`✅ ${player.name} marcado como PAGO e movido para o topo!`);
+                showToast(`${player.name} marcado como PAGO e movido para o topo!`);
             } else {
-                showToast(`❌ ${player.name} movido para pendentes.`, 'info');
+                showToast(`${player.name} movido para pendentes.`, 'info');
             }
         }
 
@@ -943,7 +940,7 @@
                 normalizeRosterOrder();
                 saveState();
                 renderAll();
-                showToast(`✅ ${subName} pagou e ocupou uma vaga livre na lista principal!`);
+                showToast(`${subName} pagou e ocupou uma vaga livre na lista principal!`);
                 return;
             }
 
@@ -971,7 +968,7 @@
             renderAll();
 
             showToast(
-                `🔄 Troca realizada! <strong>${subName}</strong> (✅ Pago) entrou na lista principal no lugar de <strong>${bumpedPlayer.name}</strong> (movido para suplentes).`,
+                `Troca realizada! <strong>${subName}</strong> (pago) entrou na lista principal no lugar de <strong>${bumpedPlayer.name}</strong> (movido para suplentes).`,
                 'warning'
             );
         }
@@ -1007,7 +1004,7 @@
                             const emptySub = appState.subs.find(s => !s.name.trim());
                             if (emptySub) emptySub.name = bumped.name;
                             else appState.subs.push({ id: uid(), name: bumped.name });
-                            showToast(`Lista cheia! ${name} (✅) entrou no lugar de ${bumped.name}.`, 'warning');
+                            showToast(`Lista cheia! ${name} (pago) entrou no lugar de ${bumped.name}.`, 'warning');
                         } else {
                             showToast('Todas as 40 vagas já estão pagas!', 'error');
                             return;
@@ -1127,7 +1124,7 @@
                         container.insertAdjacentHTML('beforeend', `
                             <div class="px-4 py-2 bg-emerald-950/30 border-y border-emerald-800/30 flex items-center justify-between">
                                 <span class="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
-                                    ✅ PAGANTES CONFIRMADOS (${paidTotal})
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5 inline-block shrink-0" aria-hidden="true"><circle cx="12" cy="12" r="10" />   <path d="m9 12 2 2 4-4" /></svg> PAGANTES CONFIRMADOS (${paidTotal})
                                 </span>
                                 <span class="text-[11px] text-emerald-500/80">Vaga garantida</span>
                             </div>
@@ -1138,7 +1135,7 @@
                         container.insertAdjacentHTML('beforeend', `
                             <div class="px-4 py-2 bg-red-950/25 border-y border-red-800/30 flex items-center justify-between">
                                 <span class="text-xs font-bold uppercase tracking-wider text-red-400 flex items-center gap-1.5">
-                                    ❌ NÃO PAGARAM (${unpaidTotal})
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5 inline-block shrink-0" aria-hidden="true"><circle cx="12" cy="12" r="10" />   <path d="m15 9-6 6" />   <path d="m9 9 6 6" /></svg> NÃO PAGARAM (${unpaidTotal})
                                 </span>
                                 <span class="text-[11px] text-red-400/70">Sujeito a perda de vaga p/ suplente</span>
                             </div>
@@ -1154,10 +1151,10 @@
 
                     const statusBtn = player.paid
                         ? `<button onclick="togglePlayerPayment('${player.id}')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-300 text-xs font-bold transition active:scale-95">
-                               <span>✅ Pago</span>
+                               <span class="inline-flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5 inline-block shrink-0" aria-hidden="true"><circle cx="12" cy="12" r="10" />   <path d="m9 12 2 2 4-4" /></svg> Pago</span>
                            </button>`
                         : `<button onclick="togglePlayerPayment('${player.id}')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/15 hover:bg-emerald-500/20 border border-red-500/40 hover:border-emerald-500/40 text-red-300 hover:text-emerald-300 text-xs font-bold transition active:scale-95">
-                               <span>❌ Pendente</span>
+                               <span class="inline-flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5 inline-block shrink-0" aria-hidden="true"><circle cx="12" cy="12" r="10" />   <path d="m15 9-6 6" />   <path d="m9 9 6 6" /></svg> Pendente</span>
                            </button>`;
 
                     const rowHtml = `
@@ -1168,17 +1165,17 @@
                                 </span>
                                 <div class="min-w-0">
                                     <p class="text-sm font-medium text-white truncate">${escapeHtml(player.name)}</p>
-                                    ${isLastUnpaid ? '<span class="inline-block text-[10px] text-amber-400/90 font-medium">⚠️ Próximo a sair se um suplente pagar</span>' : ''}
+                                    ${isLastUnpaid ? '<span class="inline-block text-[10px] text-amber-400/90 font-medium"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3 inline-block align-[-2px]" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />   <path d="M12 9v4" />   <path d="M12 17h.01" /></svg> Próximo a sair se um suplente pagar</span>' : ''}
                                 </div>
                             </div>
 
                             <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
                                 ${statusBtn}
                                 <button onclick="openEditPlayerModal('${player.id}', 'main')" title="Editar nome" class="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-[#252e29] transition">
-                                    <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5" aria-hidden="true"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />   <path d="m15 5 4 4" /></svg>
                                 </button>
                                 <button onclick="removePlayer('${player.id}')" title="Remover da lista" class="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-950/30 transition">
-                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5" aria-hidden="true"><path d="M3 6h18" />   <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />   <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />   <line x1="10" x2="10" y1="11" y2="17" />   <line x1="14" x2="14" y1="11" y2="17" /></svg>
                                 </button>
                             </div>
                         </div>
@@ -1203,7 +1200,6 @@
                 }
             }
 
-            lucide.createIcons({ root: container });
         }
 
         function quickFillSlot() {
@@ -1239,10 +1235,10 @@
                                 title="Confirmar pagamento de R$ 20 e subir para lista principal"
                                 class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg ${hasName ? 'bg-emerald-600/20 hover:bg-emerald-600/35 border border-emerald-500/40 text-emerald-300' : 'bg-[#1d2420] border border-[#2c3630] text-gray-500 cursor-not-allowed'} text-xs font-bold transition"
                             >
-                                <span>✅ Pagou (Subir)</span>
+                                <span class="inline-flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5 inline-block shrink-0" aria-hidden="true"><circle cx="12" cy="12" r="10" />   <path d="m9 12 2 2 4-4" /></svg> Pagou (Subir)</span>
                             </button>
                             <button onclick="removeSubSlot('${sub.id}')" title="Limpar/Remover suplente" class="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-950/30 transition">
-                                <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5" aria-hidden="true"><path d="M18 6 6 18" />   <path d="m6 6 12 12" /></svg>
                             </button>
                         </div>
                     </div>
@@ -1250,7 +1246,6 @@
                 container.insertAdjacentHTML('beforeend', html);
             });
 
-            lucide.createIcons({ root: container });
         }
 
         // ==========================================
@@ -1423,7 +1418,7 @@
             poolContainer.innerHTML = '';
             appState.players.forEach((p, index) => {
                 const isChecked = selectedForDraw.has(p.id);
-                const badge = p.paid ? '✅' : '❌';
+                const badge = p.paid ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-emerald-400" aria-hidden="true"><circle cx="12" cy="12" r="10" />   <path d="m9 12 2 2 4-4" /></svg>` : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-red-400" aria-hidden="true"><circle cx="12" cy="12" r="10" />   <path d="m15 9-6 6" />   <path d="m9 9 6 6" /></svg>`;
                 poolContainer.insertAdjacentHTML('beforeend', `
                     <label class="flex items-center gap-2.5 p-2.5 rounded-xl border cursor-pointer transition select-none ${isChecked ? 'bg-[#1f2922] border-[#688f5b]/60 text-white' : 'bg-[#0f1311] border-[#232b26] text-gray-500'}">
                         <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleDrawParticipant('${p.id}')" class="w-4 h-4 accent-orange-500 rounded cursor-pointer">
@@ -1562,7 +1557,7 @@
                                     ${escapeHtml(p.name)}
                                 </span>
                             </div>
-                            ${isLeader ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[11px] font-bold uppercase">👑 Líder</span>` : ''}
+                            ${isLeader ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[11px] font-bold uppercase"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3" aria-hidden="true"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z" />   <path d="M5 21h14" /></svg> Líder</span>` : ''}
                         </li>
                     `;
                 }).join('');
@@ -1643,7 +1638,6 @@
         window.addEventListener('DOMContentLoaded', () => {
             normalizeRosterOrder();
             renderAll();
-            lucide.createIcons();
         });
     </script>
 </body>
