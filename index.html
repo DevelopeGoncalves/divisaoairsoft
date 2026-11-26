@@ -833,7 +833,7 @@
             [...appState.players, ...appState.subs].forEach(x => { if (x.order === undefined) x.order = seq++; });
             let cur = cloneRoster();
             let diff = { players: diffList(rosterBase.players, cur.players), subs: diffList(rosterBase.subs, cur.subs) };
-            // Trava de segurança: nome nenhum é apagado a não ser por remoção explícita do administrador
+            // Trava de segurança: nome nenhum é apagado a não ser por remoção explícita (botão de remover)
             const removalOk = permitRemoval;
             permitRemoval = false;
             if (!removalOk && (diff.players.removed.length || diff.subs.removed.length)) {
@@ -1198,7 +1198,6 @@
         }
 
         function removePlayer(playerId) {
-            if (!window.fb.isLoggedIn()) { showToast('Somente o administrador pode remover nomes da lista.', 'warning'); return; }
             permitRemoval = true;
             appState.players = appState.players.filter(p => p.id !== playerId);
             selectedForDraw.delete(playerId);
@@ -1210,22 +1209,12 @@
         function updateSubName(subId, newName) {
             const sub = appState.subs.find(s => s.id === subId);
             if (sub) {
-                if (sub.name && sub.name.trim() && !newName.trim() && !window.fb.isLoggedIn()) {
-                    showToast('Somente o administrador pode apagar um nome da lista.', 'warning');
-                    renderSubsList();
-                    return;
-                }
                 sub.name = newName;
                 saveState();
             }
         }
 
         function removeSubSlot(subId) {
-            const target = appState.subs.find(s => s.id === subId);
-            if (target && target.name && target.name.trim() && !window.fb.isLoggedIn()) {
-                showToast('Somente o administrador pode remover nomes da lista.', 'warning');
-                return;
-            }
             permitRemoval = true;
             if (appState.subs.length <= 1) {
                 appState.subs[0].name = '';
