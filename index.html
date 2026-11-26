@@ -1585,8 +1585,9 @@
         }
 
         function handleLeaderChange() {
-            renderDrawPoolAndLeaders();
+            // Grava primeiro (lê o que a pessoa escolheu); só depois redesenha as listas
             pushLeaderChanges();
+            renderDrawPoolAndLeaders();
         }
 
         // Aleatoriedade real (crypto) sem viés de módulo
@@ -1786,7 +1787,7 @@
                 id: d.id, ts: Date.now(), t1Name: d.t1Name, t2Name: d.t2Name,
                 team1: slim(d.pub1), team2: slim(d.pub2),
                 leader1Id: d.leader1Ids[0] || '', leader2Id: d.leader2Ids[0] || ''
-            }).catch(e => console.error(e));
+            }).catch(e => { console.error(e); showToast('Não foi possível publicar o sorteio para os outros. Confira as regras do Firestore.', 'error'); });
             // Versão completa só legível por admin logado
             if (window.fb.isLoggedIn()) {
                 window.fb.saveDrawAdmin({
@@ -1814,7 +1815,11 @@
             mergeAdminDraw();
             renderDrawResults();
             document.getElementById('draw-results-area').classList.remove('hidden');
-            if (window.__drawLoaded) showToast('Novo sorteio realizado! Veja na aba Sorteio de Equipes.', 'info');
+            if (window.__drawLoaded) {
+                switchTab('sorteio');
+                showToast('Novo sorteio realizado!', 'info');
+                document.getElementById('draw-results-area').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
             window.__drawLoaded = true;
         };
 
