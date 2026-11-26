@@ -1569,14 +1569,14 @@
                 let v = document.getElementById(sl.id).value;
                 if (remoteSetup && sl.id === 'leader1-select') v = remoteSetup.leader1Id || '';
                 if (remoteSetup && sl.id === 'leader2-select') v = remoteSetup.leader2Id || '';
-                if (v !== 'random' && (!activePlayers.some(p => p.id === v) || used.has(v))) v = '';
+                if (v !== 'random' && (!appState.players.some(p => p.id === v) || used.has(v))) v = '';
                 if (v && v !== 'random') used.add(v);
                 chosen[sl.id] = v;
             });
             slots.forEach(sl => {
                 let opts = `<option value="">${sl.random}</option>`;
                 if (sl.allowRandom) opts += `<option value="random" ${chosen[sl.id] === 'random' ? 'selected' : ''}>Aleatório (sorteado na equipe)</option>`;
-                activePlayers.forEach(p => {
+                appState.players.forEach(p => {
                     if (used.has(p.id) && chosen[sl.id] !== p.id) return;
                     opts += `<option value="${p.id}" ${chosen[sl.id] === p.id ? 'selected' : ''}>${escapeHtml(p.name)}</option>`;
                 });
@@ -1587,6 +1587,11 @@
         function handleLeaderChange() {
             // Grava primeiro (lê o que a pessoa escolheu); só depois redesenha as listas
             pushLeaderChanges();
+            // Quem for escolhido como líder entra automaticamente no sorteio
+            ['leader1-select', 'coleader1-select', 'third1-select', 'leader2-select', 'coleader2-select', 'third2-select'].forEach(id => {
+                const v = document.getElementById(id).value;
+                if (v && v !== 'random') selectedForDraw.add(v);
+            });
             renderDrawPoolAndLeaders();
         }
 
