@@ -781,6 +781,7 @@
         let selectedForDraw = new Set();
         let lastDrawResult = { team1: [], team2: [], pub1: [], pub2: [], leader1Ids: [], leader2Ids: [] };
         let adminDrawData = null;
+        let drawSelectionInitialized = false;
         let remoteSetup = null;
         let remoteAdminSetup = null;
 
@@ -1496,8 +1497,10 @@
         // TEAM DRAW LOGIC (SORTEIO COM 2 LÍDERES)
         // ==========================================
         function initDrawTab() {
-            // Se ainda não há seleção feita, seleciona automaticamente todos os pagantes
-            if (selectedForDraw.size === 0) {
+            // Na primeira abertura (com a lista já carregada), marca automaticamente todos os pagantes
+            // (mantendo quem já foi marcado, como os líderes escolhidos por outras pessoas)
+            if (!drawSelectionInitialized && appState.players.length > 0) {
+                drawSelectionInitialized = true;
                 appState.players.filter(p => p.paid).forEach(p => selectedForDraw.add(p.id));
             } else {
                 // Remove IDs que não existem mais
@@ -1510,6 +1513,7 @@
         }
 
         function selectPoolPreset(preset) {
+            drawSelectionInitialized = true;
             selectedForDraw.clear();
             if (preset === 'paid') {
                 appState.players.filter(p => p.paid).forEach(p => selectedForDraw.add(p.id));
@@ -1520,6 +1524,7 @@
         }
 
         function toggleDrawParticipant(playerId) {
+            drawSelectionInitialized = true;
             if (selectedForDraw.has(playerId)) {
                 selectedForDraw.delete(playerId);
             } else {
