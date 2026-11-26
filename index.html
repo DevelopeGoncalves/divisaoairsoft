@@ -605,7 +605,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-        import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, setDoc, runTransaction } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 
         const firebaseConfig = {
@@ -628,6 +628,22 @@
 
         window.fb = {
             saveRoster: (data) => setDoc(rosterRef, data),
+            // Salva só o que mudou, em cima da versão MAIS RECENTE do banco (não sobrescreve edições de outros)
+            saveRosterDiff: (diff) => runTransaction(db, async (tx) => {
+                const snap = await tx.get(rosterRef);
+                const server = snap.exists() ? snap.data() : { players: [], subs: [] };
+                const merge = (list, d, partitionPaid) => {
+                    let out = (list || []).filter(x => !d.removed.includes(x.id));
+                    out = out.map(x => d.modified[x.id] ? { ...x, ...d.modified[x.id] } : x);
+                    d.added.forEach(a => { if (!out.some(x => x.id === a.id)) out.push(a); });
+                    if (partitionPaid) out = [...out.filter(x => x.paid), ...out.filter(x => !x.paid)];
+                    return out;
+                };
+                tx.set(rosterRef, {
+                    players: merge(server.players, diff.players, true),
+                    subs: merge(server.subs, diff.subs, false)
+                });
+            }),
             saveEvent: (data) => setDoc(eventRef, data),
             saveDraw: (data) => setDoc(drawRef, data),
             saveSetup: (data) => setDoc(setupRef, data),
@@ -758,11 +774,40 @@
         let adminDrawData = null;
         let remoteSetup = null;
 
+        // Última versão conhecida do banco (base para calcular só o que mudou)
+        let rosterBase = null;
+        let saveChain = Promise.resolve();
+        const cloneRoster = () => JSON.parse(JSON.stringify({ players: appState.players, subs: appState.subs }));
+
+        function diffList(base, cur) {
+            const baseMap = new Map((base || []).map(x => [x.id, x]));
+            const curMap = new Map(cur.map(x => [x.id, x]));
+            const d = { added: [], removed: [], modified: {} };
+            cur.forEach(x => {
+                const b = baseMap.get(x.id);
+                if (!b) { d.added.push(x); return; }
+                const patch = {};
+                Object.keys(x).forEach(k => { if (x[k] !== b[k]) patch[k] = x[k]; });
+                if (Object.keys(patch).length) d.modified[x.id] = patch;
+            });
+            (base || []).forEach(b => { if (!curMap.has(b.id)) d.removed.push(b.id); });
+            return d;
+        }
+
         function saveState() {
-            // Grava lista no Firestore (aberto a todos). Informações do jogo só via saveEventInfo (admin).
             if (!window.fb) return;
-            window.fb.saveRoster({ players: appState.players, subs: appState.subs })
-                .catch(e => { console.error(e); showToast('Falha ao salvar no banco de dados.', 'error'); });
+            if (!rosterBase) {
+                showToast('Ainda conectando ao banco de dados. Aguarde um instante e tente de novo.', 'warning');
+                return;
+            }
+            const cur = cloneRoster();
+            const diff = { players: diffList(rosterBase.players, cur.players), subs: diffList(rosterBase.subs, cur.subs) };
+            rosterBase = cur;
+            const empty = ['players', 'subs'].every(k => !diff[k].added.length && !diff[k].removed.length && !Object.keys(diff[k].modified).length);
+            if (empty) return;
+            saveChain = saveChain
+                .then(() => window.fb.saveRosterDiff(diff))
+                .catch(e => { console.error(e); showToast('Falha ao salvar no banco de dados. Confira as regras do Firestore e sua conexão.', 'error'); });
         }
 
         // Recebe dados em tempo real do Firestore
@@ -771,6 +816,7 @@
                 appState.players = Array.isArray(data.roster.players) ? data.roster.players : [];
                 appState.subs = Array.isArray(data.roster.subs) && data.roster.subs.length
                     ? data.roster.subs : [{ id: uid(), name: '' }];
+                rosterBase = cloneRoster();
             }
             if (data.event) appState.event = { ...DEFAULT_STATE.event, ...data.event };
             // Não recarrega a tela enquanto alguém digita
