@@ -1,9 +1,25 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Lista de jogadores/suplentes: todos leem e editam
+    // Lista antiga (usada só na migração para registros individuais)
     match /airsoft/roster {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    // Marca de migração concluída
+    match /airsoft/meta {
       allow read, write: if true;
+    }
+    // Cada jogador e cada suplente é um registro próprio: todos leem e editam
+    match /players/{playerId} {
+      allow read: if true;
+      allow create, update: if request.resource.data.name is string && request.resource.data.name.size() <= 80;
+      allow delete: if true;
+    }
+    match /subs/{subId} {
+      allow read: if true;
+      allow create, update: if request.resource.data.name is string && request.resource.data.name.size() <= 80;
+      allow delete: if true;
     }
     // Informações do jogo (dia, local, valores, PIX): todos leem, só admin logado edita
     match /airsoft/event {

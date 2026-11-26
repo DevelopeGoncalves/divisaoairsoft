@@ -605,7 +605,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-        import { getFirestore, doc, onSnapshot, setDoc, runTransaction } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+        import { getFirestore, doc, collection, onSnapshot, setDoc, writeBatch, runTransaction } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 
         const firebaseConfig = {
@@ -629,23 +629,17 @@
         let unsubAdminDraw = null;
 
         window.fb = {
-            saveRoster: (data) => setDoc(rosterRef, data),
-            // Salva só o que mudou, em cima da versão MAIS RECENTE do banco (não sobrescreve edições de outros)
-            saveRosterDiff: (diff) => runTransaction(db, async (tx) => {
-                const snap = await tx.get(rosterRef);
-                const server = snap.exists() ? snap.data() : { players: [], subs: [] };
-                const merge = (list, d, partitionPaid) => {
-                    let out = (list || []).filter(x => !d.removed.includes(x.id));
-                    out = out.map(x => d.modified[x.id] ? { ...x, ...d.modified[x.id] } : x);
-                    d.added.forEach(a => { if (!out.some(x => x.id === a.id)) out.push(a); });
-                    if (partitionPaid) out = [...out.filter(x => x.paid), ...out.filter(x => !x.paid)];
-                    return out;
-                };
-                tx.set(rosterRef, {
-                    players: merge(server.players, diff.players, true),
-                    subs: merge(server.subs, diff.subs, false)
+            // Cada jogador/suplente é um registro próprio (players/{id}, subs/{id}):
+            // editar um nome mexe só nele e nunca apaga nem sobrescreve os outros.
+            saveRosterDiff: async (diff) => {
+                const batch = writeBatch(db);
+                [['players', diff.players], ['subs', diff.subs]].forEach(([col, d]) => {
+                    d.added.forEach(x => { const { id, ...data } = x; batch.set(doc(db, col, id), data); });
+                    Object.entries(d.modified).forEach(([id, patch]) => batch.set(doc(db, col, id), patch, { merge: true }));
+                    d.removed.forEach(id => batch.delete(doc(db, col, id)));
                 });
-            }),
+                await batch.commit();
+            },
             saveEvent: (data) => setDoc(eventRef, data),
             saveDraw: (data) => setDoc(drawRef, data),
             // merge: cada pessoa altera só o seu campo, sem apagar o que o outro escolheu
@@ -657,16 +651,36 @@
             isLoggedIn: () => !!auth.currentUser
         };
 
-        onSnapshot(rosterRef, (snap) => {
-            if (snap.metadata.hasPendingWrites) return;
-            if (!snap.exists()) {
-                // Primeira vez: semeia o banco com a lista original
-                window.fb.saveRoster({ players: DEFAULT_STATE.players, subs: DEFAULT_STATE.subs })
-                    .catch(e => console.error('Seed roster:', e));
+        // Migração única: copia a lista antiga (airsoft/roster) para registros individuais
+        async function migrateIfNeeded() {
+            const metaRef = doc(db, 'airsoft', 'meta');
+            return await runTransaction(db, async (tx) => {
+                const meta = await tx.get(metaRef);
+                if (meta.exists() && meta.data().migrated) return false;
+                const old = await tx.get(rosterRef);
+                const src = old.exists() ? old.data() : { players: DEFAULT_STATE.players, subs: DEFAULT_STATE.subs };
+                (src.players || []).forEach((p, i) => tx.set(doc(db, 'players', p.id), { name: p.name, paid: !!p.paid, order: i }));
+                (src.subs || []).forEach((x, i) => tx.set(doc(db, 'subs', x.id), { name: x.name || '', order: i }));
+                tx.set(metaRef, { migrated: true });
+                return true;
+            });
+        }
+
+        const readCol = (snap) => snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        let migrationTried = false;
+        onSnapshot(collection(db, 'players'), (snap) => {
+            if (snap.empty && !snap.metadata.fromCache && !migrationTried) {
+                migrationTried = true;
+                migrateIfNeeded()
+                    .then(did => { if (!did) window.applyRemote({ players: [] }); })
+                    .catch(e => { console.error('Migração:', e); showToast('Erro ao preparar o banco de dados. Confira as regras do Firestore.', 'error'); });
                 return;
             }
-            window.applyRemote({ roster: snap.data() });
+            window.applyRemote({ players: readCol(snap) });
         }, (e) => { console.error(e); showToast('Erro ao conectar ao banco de dados.', 'error'); });
+        onSnapshot(collection(db, 'subs'), (snap) => {
+            window.applyRemote({ subs: readCol(snap) });
+        }, (e) => console.error(e));
 
         onSnapshot(eventRef, (snap) => {
             if (snap.metadata.hasPendingWrites) return;
@@ -787,8 +801,10 @@
 
         // Última versão conhecida do banco (base para calcular só o que mudou)
         let rosterBase = null;
+        const rosterLoaded = { players: false, subs: false };
         let saveChain = Promise.resolve();
         const cloneRoster = () => JSON.parse(JSON.stringify({ players: appState.players, subs: appState.subs }));
+        const byOrder = (a, b) => (a.order ?? 0) - (b.order ?? 0);
 
         function diffList(base, cur) {
             const baseMap = new Map((base || []).map(x => [x.id, x]));
@@ -811,6 +827,9 @@
                 showToast('Ainda conectando ao banco de dados. Aguarde um instante e tente de novo.', 'warning');
                 return;
             }
+            // Novos itens ganham uma posição (order) para manter a ordem da lista
+            let seq = Date.now();
+            [...appState.players, ...appState.subs].forEach(x => { if (x.order === undefined) x.order = seq++; });
             const cur = cloneRoster();
             const diff = { players: diffList(rosterBase.players, cur.players), subs: diffList(rosterBase.subs, cur.subs) };
             rosterBase = cur;
@@ -818,16 +837,27 @@
             if (empty) return;
             saveChain = saveChain
                 .then(() => window.fb.saveRosterDiff(diff))
-                .catch(e => { console.error(e); showToast('Falha ao salvar no banco de dados. Confira as regras do Firestore e sua conexão.', 'error'); });
+                .catch(e => {
+                    console.error(e);
+                    showToast('Falha ao salvar no banco de dados. Confira as regras do Firestore e sua conexão.', 'error');
+                    rosterBase = null; // força reconciliar com o banco no próximo envio do servidor
+                });
         }
 
         // Recebe dados em tempo real do Firestore
         window.applyRemote = function (data) {
-            if (data.roster) {
-                appState.players = Array.isArray(data.roster.players) ? data.roster.players : [];
-                appState.subs = Array.isArray(data.roster.subs) && data.roster.subs.length
-                    ? data.roster.subs : [{ id: uid(), name: '' }];
-                rosterBase = cloneRoster();
+            if (data.players) {
+                appState.players = data.players.map(x => ({ id: x.id, name: x.name || '', paid: !!x.paid, order: x.order ?? 0 })).sort(byOrder);
+                rosterLoaded.players = true;
+            }
+            if (data.subs) {
+                const subs = data.subs.map(x => ({ id: x.id, name: x.name || '', order: x.order ?? 0 })).sort(byOrder);
+                appState.subs = subs.length ? subs : [{ id: uid(), name: '' }];
+                rosterLoaded.subs = true;
+            }
+            if (data.players || data.subs) {
+                normalizeRosterOrder();
+                if (rosterLoaded.players && rosterLoaded.subs) rosterBase = cloneRoster();
             }
             if (data.event) appState.event = { ...DEFAULT_STATE.event, ...data.event };
             // Não recarrega a tela enquanto alguém digita
