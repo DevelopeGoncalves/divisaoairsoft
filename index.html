@@ -801,6 +801,7 @@
 
         // Última versão conhecida do banco (base para calcular só o que mudou)
         let rosterBase = null;
+        let permitRemoval = false;
         const rosterLoaded = { players: false, subs: false };
         let saveChain = Promise.resolve();
         const cloneRoster = () => JSON.parse(JSON.stringify({ players: appState.players, subs: appState.subs }));
@@ -830,8 +831,20 @@
             // Novos itens ganham uma posição (order) para manter a ordem da lista
             let seq = Date.now();
             [...appState.players, ...appState.subs].forEach(x => { if (x.order === undefined) x.order = seq++; });
-            const cur = cloneRoster();
-            const diff = { players: diffList(rosterBase.players, cur.players), subs: diffList(rosterBase.subs, cur.subs) };
+            let cur = cloneRoster();
+            let diff = { players: diffList(rosterBase.players, cur.players), subs: diffList(rosterBase.subs, cur.subs) };
+            // Trava de segurança: nome nenhum é apagado a não ser por remoção explícita do administrador
+            const removalOk = permitRemoval;
+            permitRemoval = false;
+            if (!removalOk && (diff.players.removed.length || diff.subs.removed.length)) {
+                diff.players.removed.forEach(id => { const o = rosterBase.players.find(x => x.id === id); if (o) appState.players.push(o); });
+                diff.subs.removed.forEach(id => { const o = rosterBase.subs.find(x => x.id === id); if (o) appState.subs.push(o); });
+                appState.players.sort(byOrder); appState.subs.sort(byOrder);
+                normalizeRosterOrder();
+                diff.players.removed = []; diff.subs.removed = [];
+                renderAll();
+                cur = cloneRoster();
+            }
             rosterBase = cur;
             const empty = ['players', 'subs'].every(k => !diff[k].added.length && !diff[k].removed.length && !Object.keys(diff[k].modified).length);
             if (empty) return;
@@ -1111,6 +1124,7 @@
 
             // Realiza a troca conforme a regra do grupo
             const bumpedPlayer = appState.players[lastUnpaidIndex];
+            permitRemoval = true;
             appState.players[lastUnpaidIndex] = { id: uid(), name: subName, paid: true };
             sub.name = bumpedPlayer.name; // O último não-pagante vai para a vaga do suplente
 
@@ -1154,6 +1168,7 @@
                         }
                         if (lastUnpaidIdx !== -1) {
                             const bumped = appState.players[lastUnpaidIdx];
+                            permitRemoval = true;
                             appState.players[lastUnpaidIdx] = { id: uid(), name, paid: true };
                             const emptySub = appState.subs.find(s => !s.name.trim());
                             if (emptySub) emptySub.name = bumped.name;
@@ -1183,6 +1198,8 @@
         }
 
         function removePlayer(playerId) {
+            if (!window.fb.isLoggedIn()) { showToast('Somente o administrador pode remover nomes da lista.', 'warning'); return; }
+            permitRemoval = true;
             appState.players = appState.players.filter(p => p.id !== playerId);
             selectedForDraw.delete(playerId);
             saveState();
@@ -1193,12 +1210,23 @@
         function updateSubName(subId, newName) {
             const sub = appState.subs.find(s => s.id === subId);
             if (sub) {
+                if (sub.name && sub.name.trim() && !newName.trim() && !window.fb.isLoggedIn()) {
+                    showToast('Somente o administrador pode apagar um nome da lista.', 'warning');
+                    renderSubsList();
+                    return;
+                }
                 sub.name = newName;
                 saveState();
             }
         }
 
         function removeSubSlot(subId) {
+            const target = appState.subs.find(s => s.id === subId);
+            if (target && target.name && target.name.trim() && !window.fb.isLoggedIn()) {
+                showToast('Somente o administrador pode remover nomes da lista.', 'warning');
+                return;
+            }
+            permitRemoval = true;
             if (appState.subs.length <= 1) {
                 appState.subs[0].name = '';
             } else {
@@ -1503,6 +1531,7 @@
                 return;
             }
 
+            permitRemoval = true; // importação (só admin) substitui a lista de propósito
             appState.players = parsedPlayers.slice(0, MAX_MAIN_SLOTS);
             normalizeRosterOrder();
 
