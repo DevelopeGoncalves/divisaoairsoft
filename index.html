@@ -372,19 +372,19 @@
                         </div>
                         <div>
                             <label class="block text-xs text-gray-400 mb-1">Líder Fixo da Equipe 1</label>
-                            <select id="leader1-select" onchange="handleLeaderChange(1)" class="w-full px-3 py-2.5 bg-[#0d100e] border border-orange-500/40 focus:border-orange-500 rounded-lg text-sm text-white outline-none">
+                            <select id="leader1-select" onchange="handleLeaderChange()" class="w-full px-3 py-2.5 bg-[#0d100e] border border-orange-500/40 focus:border-orange-500 rounded-lg text-sm text-white outline-none">
                                 <option value="">-- Sem líder fixo (aleatório) --</option>
                             </select>
                         </div>
                         <div data-admin-only style="display:none">
                             <label class="block text-xs text-gray-400 mb-1">Segundo Líder da Equipe 1 (opcional)</label>
-                            <select id="coleader1-select" onchange="handleLeaderChange(1)" class="w-full px-3 py-2.5 bg-[#0d100e] border border-orange-500/40 rounded-lg text-sm text-white outline-none">
+                            <select id="coleader1-select" onchange="handleLeaderChange()" class="w-full px-3 py-2.5 bg-[#0d100e] border border-orange-500/40 rounded-lg text-sm text-white outline-none">
                                 <option value="">-- Nenhum --</option>
                             </select>
                         </div>
                         <div data-admin-only style="display:none">
-                            <label class="block text-xs text-gray-400 mb-1">Mais 1 jogador junto do líder (opcional)</label>
-                            <select id="partner1-select" onchange="renderDrawPoolAndLeaders()" class="w-full px-3 py-2.5 bg-[#0d100e] border border-dashed border-orange-500/40 rounded-lg text-sm text-white outline-none">
+                            <label class="block text-xs text-gray-400 mb-1">Terceiro Líder da Equipe (opcional)</label>
+                            <select id="third1-select" onchange="handleLeaderChange()" class="w-full px-3 py-2.5 bg-[#0d100e] border border-dashed border-orange-500/40 rounded-lg text-sm text-white outline-none">
                                 <option value="">-- Nenhum --</option>
                             </select>
                         </div>
@@ -405,19 +405,19 @@
                         </div>
                         <div>
                             <label class="block text-xs text-gray-400 mb-1">Líder Fixo da Equipe 2</label>
-                            <select id="leader2-select" onchange="handleLeaderChange(2)" class="w-full px-3 py-2.5 bg-[#0d100e] border border-[#688f5b]/40 focus:border-[#688f5b] rounded-lg text-sm text-white outline-none">
+                            <select id="leader2-select" onchange="handleLeaderChange()" class="w-full px-3 py-2.5 bg-[#0d100e] border border-[#688f5b]/40 focus:border-[#688f5b] rounded-lg text-sm text-white outline-none">
                                 <option value="">-- Sem líder fixo (aleatório) --</option>
                             </select>
                         </div>
                         <div data-admin-only style="display:none">
                             <label class="block text-xs text-gray-400 mb-1">Segundo Líder da Equipe 2 (opcional)</label>
-                            <select id="coleader2-select" onchange="handleLeaderChange(2)" class="w-full px-3 py-2.5 bg-[#0d100e] border border-[#688f5b]/40 rounded-lg text-sm text-white outline-none">
+                            <select id="coleader2-select" onchange="handleLeaderChange()" class="w-full px-3 py-2.5 bg-[#0d100e] border border-[#688f5b]/40 rounded-lg text-sm text-white outline-none">
                                 <option value="">-- Nenhum --</option>
                             </select>
                         </div>
                         <div data-admin-only style="display:none">
-                            <label class="block text-xs text-gray-400 mb-1">Mais 1 jogador junto do líder (opcional)</label>
-                            <select id="partner2-select" onchange="renderDrawPoolAndLeaders()" class="w-full px-3 py-2.5 bg-[#0d100e] border border-dashed border-[#688f5b]/40 rounded-lg text-sm text-white outline-none">
+                            <label class="block text-xs text-gray-400 mb-1">Terceiro Líder da Equipe (opcional)</label>
+                            <select id="third2-select" onchange="handleLeaderChange()" class="w-full px-3 py-2.5 bg-[#0d100e] border border-dashed border-[#688f5b]/40 rounded-lg text-sm text-white outline-none">
                                 <option value="">-- Nenhum --</option>
                             </select>
                         </div>
@@ -624,6 +624,8 @@
         const drawRef = doc(db, 'airsoft', 'draw');
         const drawAdminRef = doc(db, 'airsoft', 'draw_admin');
         const setupRef = doc(db, 'airsoft', 'draw_setup');
+        const setupAdminRef = doc(db, 'airsoft', 'draw_setup_admin');
+        let unsubAdminSetup = null;
         let unsubAdminDraw = null;
 
         window.fb = {
@@ -646,7 +648,9 @@
             }),
             saveEvent: (data) => setDoc(eventRef, data),
             saveDraw: (data) => setDoc(drawRef, data),
-            saveSetup: (data) => setDoc(setupRef, data),
+            // merge: cada pessoa altera só o seu campo, sem apagar o que o outro escolheu
+            saveSetup: (data) => setDoc(setupRef, data, { merge: true }),
+            saveSetupAdmin: (data) => setDoc(setupAdminRef, data, { merge: true }),
             saveDrawAdmin: (data) => setDoc(drawAdminRef, data),
             login: (email, pass) => signInWithEmailAndPassword(auth, email, pass),
             logout: () => signOut(auth),
@@ -685,7 +689,12 @@
             window.updateAuthUI(user);
             // Admin também recebe a versão completa do sorteio (com 2º líder)
             if (unsubAdminDraw) { unsubAdminDraw(); unsubAdminDraw = null; window.applyRemoteDrawAdmin(null); }
+            if (unsubAdminSetup) { unsubAdminSetup(); unsubAdminSetup = null; }
             if (user) {
+                unsubAdminSetup = onSnapshot(setupAdminRef, (snap) => {
+                    if (snap.metadata.hasPendingWrites || !snap.exists()) return;
+                    window.applyRemoteAdminSetup(snap.data());
+                }, (e) => console.error(e));
                 unsubAdminDraw = onSnapshot(drawAdminRef, (snap) => {
                     if (snap.metadata.hasPendingWrites) return;
                     window.applyRemoteDrawAdmin(snap.exists() ? snap.data() : null);
@@ -773,6 +782,7 @@
         let lastDrawResult = { team1: [], team2: [], pub1: [], pub2: [], leader1Ids: [], leader2Ids: [] };
         let adminDrawData = null;
         let remoteSetup = null;
+        let remoteAdminSetup = null;
 
         // Última versão conhecida do banco (base para calcular só o que mudou)
         let rosterBase = null;
@@ -868,7 +878,8 @@
             const label = document.getElementById('btn-auth-label');
             if (label) label.textContent = user ? 'Sair (admin)' : 'Admin';
             document.querySelectorAll('[data-admin-only]').forEach(el => el.style.display = user ? "" : "none");
-            if (!user) ['partner1-select', 'partner2-select', 'coleader1-select', 'coleader2-select'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+            if (!user) remoteAdminSetup = null;
+            if (!user) ['third1-select', 'third2-select', 'coleader1-select', 'coleader2-select'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
             if (typeof renderDrawPoolAndLeaders === 'function') renderDrawPoolAndLeaders();
             if (typeof applySetupLock === 'function') applySetupLock();
             if (typeof renderDrawResults === 'function' && lastDrawResult.team1.length) renderDrawResults();
@@ -1506,7 +1517,6 @@
                 appState.players.forEach(p => selectedForDraw.add(p.id));
             }
             renderDrawPoolAndLeaders();
-            pushSetup();
         }
 
         function toggleDrawParticipant(playerId) {
@@ -1516,13 +1526,12 @@
                 selectedForDraw.add(playerId);
             }
             renderDrawPoolAndLeaders();
-            pushSetup();
         }
 
         function renderDrawPoolAndLeaders() {
             const poolContainer = document.getElementById('draw-pool-container');
-            // Visitantes sempre incluem os líderes definidos pelo admin
-            if (!isAdminNow() && remoteSetup) {
+            // Quem foi escolhido como líder (por qualquer pessoa) sempre entra no sorteio
+            if (remoteSetup) {
                 [remoteSetup.leader1Id, remoteSetup.leader2Id].filter(Boolean).forEach(id => selectedForDraw.add(id));
             }
             document.getElementById('draw-selected-count').textContent = selectedForDraw.size;
@@ -1551,15 +1560,15 @@
                 { id: 'coleader1-select', random: '-- Nenhum --', allowRandom: true },
                 { id: 'leader2-select', random: '-- Sem líder fixo (aleatório) --' },
                 { id: 'coleader2-select', random: '-- Nenhum --', allowRandom: true },
-                { id: 'partner1-select', random: '-- Nenhum --' },
-                { id: 'partner2-select', random: '-- Nenhum --' }
+                { id: 'third1-select', random: '-- Nenhum --', allowRandom: true },
+                { id: 'third2-select', random: '-- Nenhum --', allowRandom: true }
             ];
             const chosen = {};
             const used = new Set();
             slots.forEach(sl => {
                 let v = document.getElementById(sl.id).value;
-                if (!isAdminNow() && remoteSetup && sl.id === 'leader1-select') v = remoteSetup.leader1Id || '';
-                if (!isAdminNow() && remoteSetup && sl.id === 'leader2-select') v = remoteSetup.leader2Id || '';
+                if (remoteSetup && sl.id === 'leader1-select') v = remoteSetup.leader1Id || '';
+                if (remoteSetup && sl.id === 'leader2-select') v = remoteSetup.leader2Id || '';
                 if (v !== 'random' && (!activePlayers.some(p => p.id === v) || used.has(v))) v = '';
                 if (v && v !== 'random') used.add(v);
                 chosen[sl.id] = v;
@@ -1577,7 +1586,7 @@
 
         function handleLeaderChange() {
             renderDrawPoolAndLeaders();
-            pushSetup();
+            pushLeaderChanges();
         }
 
         // Aleatoriedade real (crypto) sem viés de módulo
@@ -1610,16 +1619,13 @@
             const isAdminDraw = window.fb && window.fb.isLoggedIn();
             let co1 = isAdminDraw ? document.getElementById('coleader1-select').value : '';
             let co2 = isAdminDraw ? document.getElementById('coleader2-select').value : '';
-            const fixedPicked = [leader1Id, leader2Id, co1, co2].filter(v => v && v !== 'random');
+            let th1 = isAdminDraw ? document.getElementById('third1-select').value : '';
+            let th2 = isAdminDraw ? document.getElementById('third2-select').value : '';
+            const fixedPicked = [leader1Id, leader2Id, co1, co2, th1, th2].filter(v => v && v !== 'random');
             if (new Set(fixedPicked).size !== fixedPicked.length) {
                 showToast('Escolha pessoas diferentes para cada posição de líder!', 'error');
                 return;
             }
-
-            // Parceiros extras: só valem para admin logado
-            const isAdmin = window.fb && window.fb.isLoggedIn();
-            const partner1Id = isAdmin ? document.getElementById('partner1-select').value : '';
-            const partner2Id = isAdmin ? document.getElementById('partner2-select').value : '';
 
             const btn = document.getElementById('btn-draw-teams');
             const resultsArea = document.getElementById('draw-results-area');
@@ -1633,18 +1639,13 @@
                 const team1 = [];
                 const team2 = [];
 
-                const fixedLeaders = new Set([leader1Id, leader2Id, co1, co2].filter(v => v && v !== 'random'));
+                const fixedLeaders = new Set([leader1Id, leader2Id, co1, co2, th1, th2].filter(v => v && v !== 'random'));
                 const addFixed = (id, team) => { const pl = participants.find(p => p.id === id); if (pl) team.push(pl); };
-                addFixed(leader1Id, team1); addFixed(co1, team1);
-                addFixed(leader2Id, team2); addFixed(co2, team2);
+                addFixed(leader1Id, team1); addFixed(co1, team1); addFixed(th1, team1);
+                addFixed(leader2Id, team2); addFixed(co2, team2); addFixed(th2, team2);
 
-                const partner1 = participants.find(p => p.id === partner1Id);
-                const partner2 = participants.find(p => p.id === partner2Id);
-                if (partner1) team1.push(partner1);
-                if (partner2) team2.push(partner2);
-
-                // Remaining players excluding fixed leaders and partners
-                const fixedIds = new Set([...fixedLeaders, partner1Id, partner2Id].filter(Boolean));
+                // Restante dos jogadores (sem os líderes fixos)
+                const fixedIds = fixedLeaders;
                 const remaining = participants.filter(p => !fixedIds.has(p.id));
                 const shuffled = fisherYatesShuffle(remaining);
 
@@ -1661,29 +1662,29 @@
                     }
                 });
 
-                // Líderes sem escolha fixa são sorteados dentro da própria equipe (nunca o parceiro oculto)
-                const hiddenPartners = new Set([partner1Id, partner2Id].filter(Boolean));
+                // Posições sem escolha fixa são sorteadas dentro da própria equipe
                 const pickRandom = (team, exclude) => {
-                    const pool = team.filter(x => !exclude.has(x.id) && !hiddenPartners.has(x.id));
+                    const pool = team.filter(x => !exclude.has(x.id) && !fixedLeaders.has(x.id));
                     return pool.length ? pool[secureRandInt(pool.length)].id : '';
                 };
-                const resolveLeaders = (team, leaderId, coId) => {
-                    const ids = new Set();
-                    if (!leaderId) leaderId = pickRandom(team, new Set(coId && coId !== 'random' ? [coId] : []));
-                    if (leaderId) ids.add(leaderId);
-                    if (coId === 'random') coId = pickRandom(team, ids);
-                    if (coId) ids.add(coId);
-                    return [...ids];
+                const resolveLeaders = (team, leaderId, coId, thId) => {
+                    const ids = [];
+                    const taken = new Set();
+                    const add = (id) => { if (id && !taken.has(id)) { ids.push(id); taken.add(id); } };
+                    add(leaderId || pickRandom(team, taken));
+                    add(coId === 'random' ? pickRandom(team, taken) : coId);
+                    add(thId === 'random' ? pickRandom(team, taken) : thId);
+                    return ids;
                 };
-                const leaders1 = resolveLeaders(team1, leader1Id, co1);
-                const leaders2 = resolveLeaders(team2, leader2Id, co2);
+                const leaders1 = resolveLeaders(team1, leader1Id, co1, th1);
+                const leaders2 = resolveLeaders(team2, leader2Id, co2, th2);
 
-                // Líderes no topo; o resto embaralhado para o parceiro não ficar sempre em 2º
+                // Admin: líderes no topo; o resto embaralhado
                 const mix = (team, leaderIds) => [
                     ...leaderIds.map(id => team.find(x => x.id === id)).filter(Boolean),
                     ...fisherYatesShuffle(team.filter(x => !leaderIds.includes(x.id)))
                 ];
-                // Ordem pública: só o líder principal no topo; segundo líder e parceiro ficam misturados no grupo
+                // Ordem pública: só o primeiro líder no topo; os demais líderes ficam misturados no grupo
                 const mixPublic = (team, leaderIds) => [
                     ...leaderIds.slice(0, 1).map(id => team.find(x => x.id === id)).filter(Boolean),
                     ...fisherYatesShuffle(team.filter(x => x.id !== leaderIds[0]))
@@ -1713,34 +1714,67 @@
         // ---- Configuração do sorteio (líderes principais + nomes) em tempo real ----
         function isAdminNow() { return !!(window.fb && window.fb.isLoggedIn()); }
 
+        // Nomes das equipes: só admin grava
         function pushSetup() {
             if (!isAdminNow()) return;
             const data = {
-                leader1Id: document.getElementById('leader1-select').value,
-                leader2Id: document.getElementById('leader2-select').value,
                 t1Name: document.getElementById('team1-name').value,
                 t2Name: document.getElementById('team2-name').value
             };
-            remoteSetup = data;
+            remoteSetup = { ...(remoteSetup || {}), ...data };
             window.fb.saveSetup(data).catch(e => console.error(e));
         }
 
         function applySetupLock() {
             const lock = !isAdminNow();
-            ['leader1-select', 'leader2-select'].forEach(id => { document.getElementById(id).disabled = lock; });
             ['team1-name', 'team2-name'].forEach(id => { document.getElementById(id).readOnly = lock; });
         }
 
+        // Alguém escolheu líder: grava só o campo alterado (todos veem em tempo real)
+        function pushLeaderChanges() {
+            const cur = {
+                leader1Id: document.getElementById('leader1-select').value,
+                leader2Id: document.getElementById('leader2-select').value
+            };
+            const changed = {};
+            ['leader1Id', 'leader2Id'].forEach(k => { if ((remoteSetup && remoteSetup[k] || '') !== cur[k]) changed[k] = cur[k]; });
+            if (Object.keys(changed).length) {
+                remoteSetup = { ...(remoteSetup || {}), ...changed };
+                window.fb.saveSetup(changed).catch(e => { console.error(e); showToast('Não foi possível salvar o líder. Confira as regras do Firestore.', 'error'); });
+            }
+            if (isAdminNow()) {
+                const adm = {
+                    co1: document.getElementById('coleader1-select').value,
+                    co2: document.getElementById('coleader2-select').value,
+                    third1: document.getElementById('third1-select').value,
+                    third2: document.getElementById('third2-select').value
+                };
+                const changedAdm = {};
+                Object.keys(adm).forEach(k => { if ((remoteAdminSetup && remoteAdminSetup[k] || '') !== adm[k]) changedAdm[k] = adm[k]; });
+                if (Object.keys(changedAdm).length) {
+                    remoteAdminSetup = { ...(remoteAdminSetup || {}), ...changedAdm };
+                    window.fb.saveSetupAdmin(changedAdm).catch(e => console.error(e));
+                }
+            }
+        }
+
         window.applyRemoteSetup = function (d) {
-            remoteSetup = d;
-            document.getElementById('team1-name').value = d.t1Name || document.getElementById('team1-name').value;
-            document.getElementById('team2-name').value = d.t2Name || document.getElementById('team2-name').value;
-            [d.leader1Id, d.leader2Id].filter(Boolean).forEach(id => selectedForDraw.add(id));
-            renderDrawPoolAndLeaders();
-            document.getElementById('leader1-select').value = d.leader1Id || '';
-            document.getElementById('leader2-select').value = d.leader2Id || '';
+            remoteSetup = { ...(remoteSetup || {}), ...d };
+            const n1 = document.getElementById('team1-name'), n2 = document.getElementById('team2-name');
+            if (d.t1Name && document.activeElement !== n1) n1.value = d.t1Name;
+            if (d.t2Name && document.activeElement !== n2) n2.value = d.t2Name;
             renderDrawPoolAndLeaders();
             applySetupLock();
+        };
+
+        window.applyRemoteAdminSetup = function (d) {
+            remoteAdminSetup = { ...(remoteAdminSetup || {}), ...d };
+            const map = { co1: 'coleader1-select', co2: 'coleader2-select', third1: 'third1-select', third2: 'third2-select' };
+            Object.values(map).forEach(() => {});
+            Object.keys(map).forEach(k => { if (d[k] && d[k] !== 'random') selectedForDraw.add(d[k]); });
+            renderDrawPoolAndLeaders();
+            Object.keys(map).forEach(k => { if (k in d) document.getElementById(map[k]).value = d[k] || ''; });
+            renderDrawPoolAndLeaders();
         };
 
         // ---- Sorteio em tempo real ----

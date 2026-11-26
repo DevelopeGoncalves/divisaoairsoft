@@ -10,10 +10,17 @@ service cloud.firestore {
       allow read: if true;
       allow write: if request.auth != null;
     }
-    // Líderes principais e nomes das equipes: todos leem, só admin logado define
+    // Líderes principais (leader1Id/leader2Id): qualquer pessoa escolhe e todos veem em tempo real.
+    // Nomes das equipes: só admin logado.
     match /airsoft/draw_setup {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if request.auth != null
+        || (resource == null && request.resource.data.keys().hasOnly(['leader1Id', 'leader2Id']))
+        || (resource != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['leader1Id', 'leader2Id']));
+    }
+    // Segundo e terceiro líderes (ocultos): só admin logado
+    match /airsoft/draw_setup_admin {
+      allow read, write: if request.auth != null;
     }
     // Resultado público do sorteio: qualquer pessoa sorteia e todos veem em tempo real
     match /airsoft/draw {
