@@ -214,12 +214,12 @@
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 <div class="bg-[#151a17] border border-[#2c3630] rounded-xl p-4">
                     <div class="flex items-center justify-between text-gray-400 mb-1">
-                        <span class="text-xs font-medium uppercase">Total de Vagas</span>
+                        <span class="text-xs font-medium uppercase">Total na Lista</span>
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-gray-400" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />   <circle cx="9" cy="7" r="4" />   <path d="M22 21v-2a4 4 0 0 0-3-3.87" />   <path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
                     </div>
                     <div class="flex items-baseline gap-2">
                         <span id="stat-occupied" class="font-tactical text-2xl font-bold text-white">38</span>
-                        <span class="text-xs text-gray-400">/ <span id="stat-max-slots">40</span> ocupadas</span>
+                        <span class="text-xs text-gray-400">nomes</span>
                     </div>
                 </div>
 
@@ -283,9 +283,8 @@
                 <input type="text" id="new-player-name" placeholder="Nome do novo jogador (ex: Lucas (Felipe))" required class="flex-1 px-3.5 py-2.5 bg-[#0d100e] border border-[#2c3630] focus:border-[#688f5b] rounded-xl text-sm text-white placeholder-gray-500 outline-none">
                 <div class="flex gap-2">
                     <select id="new-player-target" class="px-3 py-2.5 bg-[#0d100e] border border-[#2c3630] rounded-xl text-sm text-gray-200 outline-none">
-                        <option value="main-unpaid">Lista Principal (Pendente)</option>
-                        <option value="main-paid">Lista Principal (Já Pagou)</option>
-                        <option value="sub">Lista de Suplentes</option>
+                        <option value="main-unpaid">Pendente (aguardando pagamento)</option>
+                        <option value="main-paid">Já pagou (só admin)</option>
                     </select>
                     <button type="submit" class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#4d6b43] hover:bg-[#5c8050] text-sm font-semibold text-white transition shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />   <circle cx="9" cy="7" r="4" />   <line x1="19" x2="19" y1="8" y2="14" />   <line x1="22" x2="16" y1="11" y2="11" /></svg>
@@ -294,13 +293,13 @@
                 </div>
             </form>
 
-            <!-- Main 40-Slot Roster -->
+            <!-- Lista de presença (sem limite de vagas) -->
             <div class="bg-[#151a17] border border-[#2c3630] rounded-2xl overflow-hidden shadow-xl">
                 <div class="px-4 py-3.5 bg-[#1a211d] border-b border-[#2c3630] flex flex-wrap items-center justify-between gap-2">
                     <div class="flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-orange-500" aria-hidden="true"><path d="M10 12h11" />   <path d="M10 18h11" />   <path d="M10 6h11" />   <path d="M4 10h2" />   <path d="M4 6h1v4" />   <path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1" /></svg>
                         <h3 class="font-tactical text-lg font-bold text-white uppercase tracking-wide">
-                            Lista Oficial (40 Vagas)
+                            Lista de Presença
                         </h3>
                     </div>
                     <span class="text-xs text-gray-400">
@@ -309,31 +308,6 @@
                 </div>
 
                 <div id="main-roster-container" class="divide-y divide-[#232b26]">
-                    <!-- Rendered dynamically via JS -->
-                </div>
-            </div>
-
-            <!-- Substitutes (Suplentes) Section -->
-            <div class="bg-[#151a17] border border-[#2c3630] rounded-2xl overflow-hidden shadow-xl">
-                <div class="px-4 py-3.5 bg-[#1a211d] border-b border-[#2c3630] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-amber-400" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />   <circle cx="9" cy="7" r="4" />   <polyline points="16 11 18 13 22 9" /></svg>
-                            <h3 class="font-tactical text-lg font-bold text-white uppercase tracking-wide">
-                                Lista de Suplentes
-                            </h3>
-                        </div>
-                        <p class="text-xs text-gray-400 mt-0.5">
-                            Regra: Se o suplente pagar, assume automaticamente a vaga do <strong class="text-amber-300">último não-pagante</strong> da lista acima!
-                        </p>
-                    </div>
-                    <button onclick="addEmptySubSlot()" class="self-start sm:self-center inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1d2420] hover:bg-[#28322c] border border-[#3a473f] text-xs font-semibold text-gray-200 transition">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5 text-amber-400" aria-hidden="true"><path d="M5 12h14" />   <path d="M12 5v14" /></svg>
-                        Vaga Suplente
-                    </button>
-                </div>
-
-                <div id="subs-roster-container" class="divide-y divide-[#232b26]">
                     <!-- Rendered dynamically via JS -->
                 </div>
             </div>
@@ -520,7 +494,7 @@
                 </button>
             </div>
             <p class="text-xs text-gray-300 leading-relaxed">
-                Cole abaixo o texto completo da lista do mês que você usa no grupo do WhatsApp. O sistema identifica automaticamente quem tem <strong class="text-emerald-400">o check de pago</strong> (pagante), quem não tem (pendente) e os suplentes.
+                Cole abaixo o texto completo da lista do mês que você usa no grupo do WhatsApp. O sistema identifica automaticamente quem tem <strong class="text-emerald-400">o check de pago</strong> (pagante), quem não tem (pendente) e quem está sob "Suplentes" entra como pendente.
             </p>
             <textarea id="import-textarea" rows="10" placeholder="Cole aqui a mensagem do WhatsApp com a lista..." class="w-full p-3 bg-[#0d100e] border border-[#2c3630] focus:border-orange-500 rounded-xl text-xs font-mono text-gray-200 outline-none"></textarea>
             <div class="flex justify-end gap-2 pt-2">
@@ -617,7 +591,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-        import { getFirestore, doc, collection, onSnapshot, setDoc, writeBatch, runTransaction } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+        import { getFirestore, doc, collection, onSnapshot, setDoc, getDoc, getDocs, writeBatch, runTransaction } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 
         const firebaseConfig = {
@@ -641,15 +615,14 @@
         let unsubAdminDraw = null;
 
         window.fb = {
-            // Cada jogador/suplente é um registro próprio (players/{id}, subs/{id}):
+            // Cada jogador é um registro próprio (players/{id}):
             // editar um nome mexe só nele e nunca apaga nem sobrescreve os outros.
             saveRosterDiff: async (diff) => {
                 const batch = writeBatch(db);
-                [['players', diff.players], ['subs', diff.subs]].forEach(([col, d]) => {
-                    d.added.forEach(x => { const { id, ...data } = x; batch.set(doc(db, col, id), data); });
-                    Object.entries(d.modified).forEach(([id, patch]) => batch.set(doc(db, col, id), patch, { merge: true }));
-                    d.removed.forEach(id => batch.delete(doc(db, col, id)));
-                });
+                const d = diff.players;
+                d.added.forEach(x => { const { id, ...data } = x; batch.set(doc(db, 'players', id), data); });
+                Object.entries(d.modified).forEach(([id, patch]) => batch.set(doc(db, 'players', id), patch, { merge: true }));
+                d.removed.forEach(id => batch.delete(doc(db, 'players', id)));
                 await batch.commit();
             },
             saveEvent: (data) => setDoc(eventRef, data),
@@ -663,36 +636,55 @@
             isLoggedIn: () => !!auth.currentUser
         };
 
-        // Migração única: copia a lista antiga (airsoft/roster) para registros individuais
+        const metaRef = doc(db, 'airsoft', 'meta');
+
+        // Migração única: copia a lista antiga (airsoft/roster) para registros individuais.
+        // Nomes que estavam em "suplentes" entram na lista como pendentes.
         async function migrateIfNeeded() {
-            const metaRef = doc(db, 'airsoft', 'meta');
             return await runTransaction(db, async (tx) => {
                 const meta = await tx.get(metaRef);
                 if (meta.exists() && meta.data().migrated) return false;
                 const old = await tx.get(rosterRef);
-                const src = old.exists() ? old.data() : { players: DEFAULT_STATE.players, subs: DEFAULT_STATE.subs };
+                const src = old.exists() ? old.data() : { players: DEFAULT_STATE.players, subs: [] };
                 (src.players || []).forEach((p, i) => tx.set(doc(db, 'players', p.id), { name: p.name, paid: !!p.paid, order: i }));
-                (src.subs || []).forEach((x, i) => tx.set(doc(db, 'subs', x.id), { name: x.name || '', order: i }));
-                tx.set(metaRef, { migrated: true });
+                (src.subs || []).filter(x => (x.name || '').trim()).forEach((x, i) =>
+                    tx.set(doc(db, 'players', x.id), { name: x.name.trim(), paid: false, order: 100000 + i }));
+                tx.set(metaRef, { migrated: true, subsMerged: true }, { merge: true });
                 return true;
             });
         }
 
+        // Fim das listas de suplentes: quem estava como suplente passa para a lista principal (pendente)
+        async function mergeSubsIfNeeded() {
+            const m = await getDoc(metaRef);
+            if (m.exists() && m.data().subsMerged) return;
+            const subsSnap = await getDocs(collection(db, 'subs'));
+            const named = subsSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+                .filter(x => (x.name || '').trim())
+                .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+            await runTransaction(db, async (tx) => {
+                const m2 = await tx.get(metaRef);
+                if (m2.exists() && m2.data().subsMerged) return;
+                named.forEach((x, i) => tx.set(doc(db, 'players', x.id), { name: x.name.trim(), paid: false, order: 100000 + i }));
+                tx.set(metaRef, { subsMerged: true }, { merge: true });
+            });
+        }
+
         const readCol = (snap) => snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        let migrationTried = false;
+        let initDone = false;
+        let lastPlayersSnap = null;
+        migrateIfNeeded().then(mergeSubsIfNeeded)
+            .catch(e => { console.error('Migração:', e); showToast('Erro ao preparar o banco de dados. Confira as regras do Firestore.', 'error'); })
+            .finally(() => {
+                initDone = true;
+                if (lastPlayersSnap && lastPlayersSnap.empty) window.applyRemote({ players: [] });
+            });
         onSnapshot(collection(db, 'players'), (snap) => {
-            if (snap.empty && !snap.metadata.fromCache && !migrationTried) {
-                migrationTried = true;
-                migrateIfNeeded()
-                    .then(did => { if (!did) window.applyRemote({ players: [] }); })
-                    .catch(e => { console.error('Migração:', e); showToast('Erro ao preparar o banco de dados. Confira as regras do Firestore.', 'error'); });
-                return;
-            }
+            lastPlayersSnap = snap;
+            // Lista vazia antes de terminar a preparação inicial: espera, para não piscar vazio
+            if (snap.empty && !initDone) return;
             window.applyRemote({ players: readCol(snap) });
         }, (e) => { console.error(e); showToast('Erro ao conectar ao banco de dados.', 'error'); });
-        onSnapshot(collection(db, 'subs'), (snap) => {
-            window.applyRemote({ subs: readCol(snap) });
-        }, (e) => console.error(e));
 
         onSnapshot(eventRef, (snap) => {
             if (snap.metadata.hasPendingWrites) return;
@@ -739,7 +731,6 @@
         // INITIAL DATA & STATE MANAGEMENT
         // ==========================================
         const STORAGE_KEY = 'airsoft_ops_data_v1';
-        const MAX_MAIN_SLOTS = 40;
 
         const DEFAULT_STATE = {
             event: {
@@ -793,12 +784,6 @@
                 { id: 'p36', name: 'Lucas (João)', paid: false },
                 { id: 'p37', name: 'Vinícius (João)', paid: false },
                 { id: 'p38', name: 'Wesley (João)', paid: false }
-            ],
-            subs: [
-                { id: 's1', name: '' },
-                { id: 's2', name: '' },
-                { id: 's3', name: '' },
-                { id: 's4', name: '' }
             ]
         };
 
@@ -815,9 +800,9 @@
         // Última versão conhecida do banco (base para calcular só o que mudou)
         let rosterBase = null;
         let permitRemoval = false;
-        const rosterLoaded = { players: false, subs: false };
+        const rosterLoaded = { players: false };
         let saveChain = Promise.resolve();
-        const cloneRoster = () => JSON.parse(JSON.stringify({ players: appState.players, subs: appState.subs }));
+        const cloneRoster = () => JSON.parse(JSON.stringify({ players: appState.players }));
         const byOrder = (a, b) => (a.order ?? 0) - (b.order ?? 0);
 
         function diffList(base, cur) {
@@ -843,23 +828,22 @@
             }
             // Novos itens ganham uma posição (order) para manter a ordem da lista
             let seq = Date.now();
-            [...appState.players, ...appState.subs].forEach(x => { if (x.order === undefined) x.order = seq++; });
+            appState.players.forEach(x => { if (x.order === undefined) x.order = seq++; });
             let cur = cloneRoster();
-            let diff = { players: diffList(rosterBase.players, cur.players), subs: diffList(rosterBase.subs, cur.subs) };
+            let diff = { players: diffList(rosterBase.players, cur.players) };
             // Trava de segurança: nome nenhum é apagado a não ser por remoção explícita (botão de remover)
             const removalOk = permitRemoval;
             permitRemoval = false;
-            if (!removalOk && (diff.players.removed.length || diff.subs.removed.length)) {
+            if (!removalOk && diff.players.removed.length) {
                 diff.players.removed.forEach(id => { const o = rosterBase.players.find(x => x.id === id); if (o) appState.players.push(o); });
-                diff.subs.removed.forEach(id => { const o = rosterBase.subs.find(x => x.id === id); if (o) appState.subs.push(o); });
-                appState.players.sort(byOrder); appState.subs.sort(byOrder);
+                appState.players.sort(byOrder);
                 normalizeRosterOrder();
-                diff.players.removed = []; diff.subs.removed = [];
+                diff.players.removed = [];
                 renderAll();
                 cur = cloneRoster();
             }
             rosterBase = cur;
-            const empty = ['players', 'subs'].every(k => !diff[k].added.length && !diff[k].removed.length && !Object.keys(diff[k].modified).length);
+            const empty = !diff.players.added.length && !diff.players.removed.length && !Object.keys(diff.players.modified).length;
             if (empty) return;
             saveChain = saveChain
                 .then(() => window.fb.saveRosterDiff(diff))
@@ -876,14 +860,9 @@
                 appState.players = data.players.map(x => ({ id: x.id, name: x.name || '', paid: !!x.paid, order: x.order ?? 0 })).sort(byOrder);
                 rosterLoaded.players = true;
             }
-            if (data.subs) {
-                const subs = data.subs.map(x => ({ id: x.id, name: x.name || '', order: x.order ?? 0 })).sort(byOrder);
-                appState.subs = subs.length ? subs : [{ id: uid(), name: '' }];
-                rosterLoaded.subs = true;
-            }
-            if (data.players || data.subs) {
+            if (data.players) {
                 normalizeRosterOrder();
-                if (rosterLoaded.players && rosterLoaded.subs) rosterBase = cloneRoster();
+                if (rosterLoaded.players) rosterBase = cloneRoster();
             }
             if (data.event) appState.event = { ...DEFAULT_STATE.event, ...data.event };
             // Não recarrega a tela enquanto alguém digita
@@ -1101,60 +1080,6 @@
             }
         }
 
-        function promoteSubToPaid(subId) {
-            if (!window.fb.isLoggedIn()) { adminOnlyNotice(); return; }
-            const subIndex = appState.subs.findIndex(s => s.id === subId);
-            if (subIndex === -1) return;
-            const sub = appState.subs[subIndex];
-
-            if (!sub.name || !sub.name.trim()) {
-                showToast('Digite o nome do suplente antes de confirmar o pagamento.', 'warning');
-                return;
-            }
-
-            const subName = sub.name.trim();
-
-            // Caso 1: Ainda há vagas livres na lista principal (< 40)
-            if (appState.players.length < MAX_MAIN_SLOTS) {
-                appState.players.push({ id: uid(), name: subName, paid: true });
-                sub.name = ''; // Libera a vaga do suplente
-                normalizeRosterOrder();
-                saveState();
-                renderAll();
-                showToast(`${subName} pagou e ocupou uma vaga livre na lista principal!`);
-                return;
-            }
-
-            // Caso 2: Lista principal está cheia (40 vagas). Procura o ÚLTIMO não-pagante da lista principal
-            let lastUnpaidIndex = -1;
-            for (let i = appState.players.length - 1; i >= 0; i--) {
-                if (!appState.players[i].paid) {
-                    lastUnpaidIndex = i;
-                    break;
-                }
-            }
-
-            if (lastUnpaidIndex === -1) {
-                showToast('Todos os 40 jogadores da lista principal já pagaram! Não há vaga de não-pagante para substituir.', 'error');
-                return;
-            }
-
-            // Realiza a troca conforme a regra do grupo
-            const bumpedPlayer = appState.players[lastUnpaidIndex];
-            permitRemoval = true;
-            appState.players[lastUnpaidIndex] = { id: uid(), name: subName, paid: true };
-            sub.name = bumpedPlayer.name; // O último não-pagante vai para a vaga do suplente
-
-            normalizeRosterOrder();
-            saveState();
-            renderAll();
-
-            showToast(
-                `Troca realizada! <strong>${subName}</strong> (pago) entrou na lista principal no lugar de <strong>${bumpedPlayer.name}</strong> (movido para suplentes).`,
-                'warning'
-            );
-        }
-
         function handleAddPlayer(e) {
             e.preventDefault();
             const input = document.getElementById('new-player-name');
@@ -1162,52 +1087,15 @@
             const name = input.value.trim();
             if (!name) return;
 
-            if (target === 'sub') {
-                // Tenta preencher primeiro uma vaga vazia de suplente
-                const emptySub = appState.subs.find(s => !s.name.trim());
-                if (emptySub) {
-                    emptySub.name = name;
-                } else {
-                    appState.subs.push({ id: uid(), name });
-                }
-                showToast(`${name} adicionado à lista de suplentes.`);
+            // Só o admin define pagamento; qualquer pessoa entra como pendente
+            if (target === 'main-paid' && !window.fb.isLoggedIn()) {
+                showToast('Só o admin pode marcar como pago. Adicionado como pendente.', 'info');
             } else {
-                if (target === 'main-paid' && !window.fb.isLoggedIn()) {
-                    showToast('Só o admin pode adicionar já como pago. Adicionado como pendente.', 'info');
-                }
-                const isPaid = target === 'main-paid' && window.fb.isLoggedIn();
-                if (appState.players.length >= MAX_MAIN_SLOTS) {
-                    if (isPaid) {
-                        // Se já pagou e lista tá cheia, aplica a regra de substituir o último não pagante
-                        let lastUnpaidIdx = -1;
-                        for (let i = appState.players.length - 1; i >= 0; i--) {
-                            if (!appState.players[i].paid) { lastUnpaidIdx = i; break; }
-                        }
-                        if (lastUnpaidIdx !== -1) {
-                            const bumped = appState.players[lastUnpaidIdx];
-                            permitRemoval = true;
-                            appState.players[lastUnpaidIdx] = { id: uid(), name, paid: true };
-                            const emptySub = appState.subs.find(s => !s.name.trim());
-                            if (emptySub) emptySub.name = bumped.name;
-                            else appState.subs.push({ id: uid(), name: bumped.name });
-                            showToast(`Lista cheia! ${name} (pago) entrou no lugar de ${bumped.name}.`, 'warning');
-                        } else {
-                            showToast('Todas as 40 vagas já estão pagas!', 'error');
-                            return;
-                        }
-                    } else {
-                        // Vai para suplentes automaticamente se lista de 40 já está lotada
-                        const emptySub = appState.subs.find(s => !s.name.trim());
-                        if (emptySub) emptySub.name = name;
-                        else appState.subs.push({ id: uid(), name });
-                        showToast(`Lista de 40 cheia! ${name} foi colocado nos suplentes.`, 'info');
-                    }
-                } else {
-                    appState.players.push({ id: uid(), name, paid: isPaid });
-                    showToast(`${name} adicionado à lista principal!`);
-                }
-                normalizeRosterOrder();
+                showToast(`${name} adicionado à lista!`);
             }
+            const isPaid = target === 'main-paid' && window.fb.isLoggedIn();
+            appState.players.push({ id: uid(), name, paid: isPaid });
+            normalizeRosterOrder();
 
             input.value = '';
             saveState();
@@ -1223,35 +1111,8 @@
             showToast('Jogador removido da lista.', 'info');
         }
 
-        function updateSubName(subId, newName) {
-            const sub = appState.subs.find(s => s.id === subId);
-            if (sub) {
-                sub.name = newName;
-                saveState();
-            }
-        }
-
-        function removeSubSlot(subId) {
-            permitRemoval = true;
-            if (appState.subs.length <= 1) {
-                appState.subs[0].name = '';
-            } else {
-                appState.subs = appState.subs.filter(s => s.id !== subId);
-            }
-            saveState();
-            renderSubsList();
-        }
-
-        function addEmptySubSlot() {
-            appState.subs.push({ id: uid(), name: '' });
-            saveState();
-            renderSubsList();
-        }
-
         function openEditPlayerModal(id, listType) {
-            const item = listType === 'main'
-                ? appState.players.find(p => p.id === id)
-                : appState.subs.find(s => s.id === id);
+            const item = appState.players.find(p => p.id === id);
             if (!item) return;
 
             document.getElementById('edit-player-id').value = id;
@@ -1268,13 +1129,8 @@
 
             if (!newName) return;
 
-            if (listType === 'main') {
-                const p = appState.players.find(x => x.id === id);
-                if (p) p.name = newName;
-            } else {
-                const s = appState.subs.find(x => x.id === id);
-                if (s) s.name = newName;
-            }
+            const p = appState.players.find(x => x.id === id);
+            if (p) p.name = newName;
 
             saveState();
             renderAll();
@@ -1293,19 +1149,19 @@
             let renderedPaidDivider = false;
             let renderedUnpaidDivider = false;
 
-            for (let i = 0; i < MAX_MAIN_SLOTS; i++) {
+            for (let i = 0; i < appState.players.length; i++) {
                 const slotNum = i + 1;
                 const player = appState.players[i];
 
                 // Filter check
                 if (query) {
-                    if (!player || !player.name.toLowerCase().includes(query)) {
+                    if (!player.name.toLowerCase().includes(query)) {
                         continue;
                     }
                 }
 
                 // Section dividers (only when not searching)
-                if (!query && player) {
+                if (!query) {
                     if (player.paid && !renderedPaidDivider) {
                         renderedPaidDivider = true;
                         const paidTotal = appState.players.filter(p => p.paid).length;
@@ -1314,7 +1170,7 @@
                                 <span class="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5 inline-block shrink-0" aria-hidden="true"><circle cx="12" cy="12" r="10" />   <path d="m9 12 2 2 4-4" /></svg> PAGANTES CONFIRMADOS (${paidTotal})
                                 </span>
-                                <span class="text-[11px] text-emerald-500/80">Vaga garantida</span>
+                                <span class="text-[11px] text-emerald-500/80">Entram na lista do WhatsApp</span>
                             </div>
                         `);
                     } else if (!player.paid && !renderedUnpaidDivider) {
@@ -1325,14 +1181,13 @@
                                 <span class="text-xs font-bold uppercase tracking-wider text-red-400 flex items-center gap-1.5">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5 inline-block shrink-0" aria-hidden="true"><circle cx="12" cy="12" r="10" />   <path d="m15 9-6 6" />   <path d="m9 9 6 6" /></svg> NÃO PAGARAM (${unpaidTotal})
                                 </span>
-                                <span class="text-[11px] text-red-400/70">Sujeito a perda de vaga p/ suplente</span>
+                                <span class="text-[11px] text-red-400/70">Aguardando confirmação do admin</span>
                             </div>
                         `);
                     }
                 }
 
-                if (player) {
-                    const isLastUnpaid = !player.paid && (i === appState.players.length - 1);
+                {
                     const rowBg = player.paid
                         ? 'hover:bg-[#1a221d]'
                         : 'bg-[#171414]/60 hover:bg-[#1f1a1a]';
@@ -1353,7 +1208,6 @@
                                 </span>
                                 <div class="min-w-0">
                                     <p class="text-sm font-medium text-white truncate">${escapeHtml(player.name)}</p>
-                                    ${isLastUnpaid ? '<span class="inline-block text-[10px] text-amber-400/90 font-medium"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3 inline-block align-[-2px]" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />   <path d="M12 9v4" />   <path d="M12 17h.01" /></svg> Próximo a sair se um suplente pagar</span>' : ''}
                                 </div>
                             </div>
 
@@ -1369,70 +1223,8 @@
                         </div>
                     `;
                     container.insertAdjacentHTML('beforeend', rowHtml);
-                } else {
-                    // Empty slot up to 40
-                    const emptyHtml = `
-                        <div class="px-3 sm:px-4 py-2 flex items-center justify-between gap-2 bg-[#111513]/60 text-gray-600">
-                            <div class="flex items-center gap-3">
-                                <span class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-mono bg-[#181d1a] text-gray-600 border border-[#242b27]">
-                                    ${String(slotNum).padStart(2, '0')}
-                                </span>
-                                <span class="text-xs italic">Vaga disponível</span>
-                            </div>
-                            <button onclick="quickFillSlot()" class="text-xs text-gray-500 hover:text-orange-400 px-2 py-1 rounded transition">
-                                + Preencher
-                            </button>
-                        </div>
-                    `;
-                    container.insertAdjacentHTML('beforeend', emptyHtml);
                 }
             }
-
-        }
-
-        function quickFillSlot() {
-            const input = document.getElementById('new-player-name');
-            input.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            input.focus();
-        }
-
-        function renderSubsList() {
-            const container = document.getElementById('subs-roster-container');
-            container.innerHTML = '';
-
-            appState.subs.forEach((sub, idx) => {
-                const hasName = sub.name && sub.name.trim().length > 0;
-                const html = `
-                    <div class="px-3 sm:px-4 py-2.5 flex items-center justify-between gap-2 hover:bg-[#1a221d] transition">
-                        <div class="flex items-center gap-3 flex-1 min-w-0">
-                            <span class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-mono font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30 shrink-0">
-                                ${idx + 1}
-                            </span>
-                            <input
-                                type="text"
-                                value="${escapeHtml(sub.name)}"
-                                onchange="updateSubName('${sub.id}', this.value)"
-                                placeholder="Nome do suplente..."
-                                class="w-full bg-transparent border-b border-transparent focus:border-amber-500/60 text-sm text-white placeholder-gray-600 py-1 outline-none"
-                            >
-                        </div>
-
-                        <div class="flex items-center gap-1.5 shrink-0">
-                            <button
-                                onclick="promoteSubToPaid('${sub.id}')"
-                                title="Confirmar pagamento de R$ 20 e subir para lista principal"
-                                class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg ${hasName ? 'bg-emerald-600/20 hover:bg-emerald-600/35 border border-emerald-500/40 text-emerald-300' : 'bg-[#1d2420] border border-[#2c3630] text-gray-500 cursor-not-allowed'} text-xs font-bold transition"
-                            >
-                                <span class="inline-flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5 inline-block shrink-0" aria-hidden="true"><circle cx="12" cy="12" r="10" />   <path d="m9 12 2 2 4-4" /></svg> Pagou (Subir)</span>
-                            </button>
-                            <button onclick="removeSubSlot('${sub.id}')" title="Limpar/Remover suplente" class="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-950/30 transition">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5" aria-hidden="true"><path d="M18 6 6 18" />   <path d="m6 6 12 12" /></svg>
-                            </button>
-                        </div>
-                    </div>
-                `;
-                container.insertAdjacentHTML('beforeend', html);
-            });
 
         }
 
@@ -1442,7 +1234,6 @@
         function copyWhatsAppList() {
             const ev = appState.event;
             const paidPlayers = appState.players.filter(p => p.paid);
-            const unpaidPlayers = appState.players.filter(p => !p.paid);
 
             let text = `🚨 GALERA, DATA CONFIRMADA! 🚨\n\n`;
             text += `📅 Data: ${ev.date}\n`;
@@ -1462,23 +1253,8 @@
                 counter++;
             });
 
-            text += `\n❌ NÃO PAGARAM (${unpaidPlayers.length}):\n\n`;
-            unpaidPlayers.forEach(p => {
-                text += `${counter}- ${p.name}\n`;
-                counter++;
-            });
 
-            while (counter <= MAX_MAIN_SLOTS) {
-                text += `${counter}-\n`;
-                counter++;
-            }
-
-            text += `Suplente se pagar a entrada já entra em um lugar de quem ainda não pagou, entra no lugar sempre quem está no último da lista a cima não pagante\n`;
-            appState.subs.forEach((s, idx) => {
-                text += `${idx + 1}. ${s.name ? s.name : ''}\n`;
-            });
-
-            copyTextToClipboard(text.trim(), 'Lista formatada copiada! Agora é só colar no WhatsApp.');
+            copyTextToClipboard(text.trim(), `Lista copiada com ${paidPlayers.length} pagantes! Agora é só colar no WhatsApp.`);
         }
 
         function openImportModal() {
@@ -1496,8 +1272,7 @@
 
             const lines = raw.split('\n').map(l => l.trim());
             const parsedPlayers = [];
-            const parsedSubs = [];
-            let inSubsSection = false;
+            let inSubsSection = false; // nomes sob "Suplentes" entram na lista como pendentes
 
             for (const line of lines) {
                 if (!line) continue;
@@ -1514,9 +1289,9 @@
                     let content = mainMatch[2].trim();
 
                     if (inSubsSection) {
-                        const cleanSub = content.replace(/✅/g, '').trim();
-                        parsedSubs.push({ id: uid(), name: cleanSub });
-                    } else if (num >= 1 && num <= 50) {
+                        const cleanSub = content.replace(/✅/g, '').replace(/\s+/g, ' ').trim();
+                        if (cleanSub) parsedPlayers.push({ id: uid(), name: cleanSub, paid: false });
+                    } else if (num >= 1) {
                         if (content.length > 0) {
                             const hasCheck = content.includes('✅');
                             // Remove checkmarks while preserving parentheses like "Aleydson ✅ (Jean)" -> "Aleydson (Jean)"
@@ -1539,19 +1314,8 @@
             }
 
             permitRemoval = true; // importação (só admin) substitui a lista de propósito
-            appState.players = parsedPlayers.slice(0, MAX_MAIN_SLOTS);
+            appState.players = parsedPlayers;
             normalizeRosterOrder();
-
-            if (parsedSubs.length > 0) {
-                appState.subs = parsedSubs;
-            } else {
-                appState.subs = [
-                    { id: uid(), name: '' },
-                    { id: uid(), name: '' },
-                    { id: uid(), name: '' },
-                    { id: uid(), name: '' }
-                ];
-            }
 
             saveState();
             renderAll();
@@ -2014,7 +1778,6 @@
             renderEventInfo();
             updateStats();
             renderMainList();
-            renderSubsList();
             if (!document.getElementById('tab-sorteio').classList.contains('hidden')) {
                 initDrawTab();
             }

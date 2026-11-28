@@ -10,16 +10,16 @@ service cloud.firestore {
     match /airsoft/meta {
       allow read, write: if true;
     }
-    // Cada jogador e cada suplente é um registro próprio: todos leem, adicionam, editam e removem nomes (sem login)
+    // Cada jogador é um registro próprio (lista sem limite de vagas): todos leem, adicionam, editam e removem nomes (sem login)
     match /players/{playerId} {
       allow read: if true;
       allow create, update: if request.resource.data.name is string && request.resource.data.name.size() <= 80;
       allow delete: if true;
     }
+    // Suplentes foram extintos: coleção antiga só para leitura (migração)
     match /subs/{subId} {
       allow read: if true;
-      allow create, update: if request.resource.data.name is string && request.resource.data.name.size() <= 80;
-      allow delete: if true;
+      allow write: if false;
     }
     // Informações do jogo (dia, local, valores, PIX): todos leem, só admin logado edita
     match /airsoft/event {
