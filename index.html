@@ -1103,6 +1103,9 @@
         }
 
         function removePlayer(playerId) {
+            const target = appState.players.find(p => p.id === playerId);
+            if (!target) return;
+            if (!window.confirm(`Remover "${target.name}" da lista?\n\nEssa ação apaga o nome para todos.`)) return;
             permitRemoval = true;
             appState.players = appState.players.filter(p => p.id !== playerId);
             selectedForDraw.delete(playerId);
@@ -1313,6 +1316,7 @@
                 return;
             }
 
+            if (!window.confirm(`Importar vai SUBSTITUIR a lista atual (${appState.players.length} nomes) por ${parsedPlayers.length} nomes do texto.\n\nContinuar?`)) return;
             permitRemoval = true; // importação (só admin) substitui a lista de propósito
             appState.players = parsedPlayers;
             normalizeRosterOrder();
